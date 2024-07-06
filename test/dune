@@ -1,0 +1,13 @@
+(executable
+ (name test)
+ (libraries test_lib ocaml_rs_smartptr_test_stubs))
+
+(rule
+ (with-stdout-to
+  test.out
+  (run ./test.exe)))
+
+(rule
+ (alias runtest)
+ (action
+  (diff test.expected test.out)))

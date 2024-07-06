@@ -1,0 +1,47 @@
+(library
+ (name test_lib)
+ (libraries ocaml-rs-smartptr))
+
+(rule
+ (targets
+  libocaml_rs_smartptr_test.a
+  dllocaml_rs_smartptr_test.so
+  bindings.ml)
+ (deps (universe))
+ (locks cargo-build)
+ (action
+  (progn
+   (run cargo build --release --offline --package ocaml-rs-smartptr-test)
+   (run
+    mv
+    %{workspace_root}/../../target/release/libocaml_rs_smartptr_test.a
+    libocaml_rs_smartptr_test.a)
+   (run
+    mv
+    %{workspace_root}/../../target/release/libocaml_rs_smartptr_test.so
+    dllocaml_rs_smartptr_test.so)
+   (with-stdout-to
+    bindings.ml
+    (run
+     cargo
+     run
+     --release
+     --offline
+     --package
+     ocaml-rs-smartptr-test
+     --bin
+     main)))))
+
+; This library is deliberately empty from OCaml perspective. It's only purpose
+; is to drag Rust stubs static lib into the final executable linkage by dune.
+; Within this project it is used in test binaries. Bear in mind that two libs
+; like this can not be linked into one binary, as static libs produced by Rust
+; expose all Rust stdlib symbols, and linking will explode with collision
+; errors.
+
+(library
+ (name ocaml_rs_smartptr_test_stubs)
+ (foreign_archives ocaml_rs_smartptr_test)
+ (modules ())
+ (c_library_flags
+  (-lpthread -lc -lm)))

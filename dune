@@ -1,0 +1,6 @@
+(data_only_dirs target)
+
+(rule
+ (alias runtest)
+ (action
+  (run cargo test --workspace)))

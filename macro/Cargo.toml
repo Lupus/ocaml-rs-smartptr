@@ -1,0 +1,16 @@
+[package]
+name = "proc-macro-crate"
+version = "0.1.0"
+edition = "2021"
+
+# The `proc-macro` key indicates that this crate is a procedural macro.
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = {version="2",features=["full"]}
+quote = "1.0"
+proc-macro2 = "1.0"
+
+[dev-dependencies]
+prettyplease = "0.2"
