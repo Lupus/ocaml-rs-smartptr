@@ -17,8 +17,8 @@ impl<'a, T> Deref for LockReadGuard<'a, T> {
 
     fn deref(&self) -> &Self::Target {
         match self {
-            LockReadGuard::Mutex(guard) => &*guard,
-            LockReadGuard::RwLockRead(guard) => &*guard,
+            LockReadGuard::Mutex(guard) => guard,
+            LockReadGuard::RwLockRead(guard) => guard,
         }
     }
 }
@@ -37,8 +37,8 @@ impl<'a, T> Deref for LockWriteGuard<'a, T> {
 
     fn deref(&self) -> &Self::Target {
         match self {
-            LockWriteGuard::Mutex(guard) => &*guard,
-            LockWriteGuard::RwLockWrite(guard) => &*guard,
+            LockWriteGuard::Mutex(guard) => guard,
+            LockWriteGuard::RwLockWrite(guard) => guard,
         }
     }
 }
@@ -161,14 +161,9 @@ impl Registry {
         let type_in = (**input).type_id(); // &Arc<dyn Any> -> Arc<dyn Any> -> dyn Any
         let type_out = TypeId::of::<Out>();
         let type_in_name = self.type_name(&type_in);
-        self.traits.get(&(type_in, type_out)).expect(
-            format!(
-                "there is no registered coercion for {:?} => {:?}",
+        self.traits.get(&(type_in, type_out)).unwrap_or_else(|| panic!("there is no registered coercion for {:?} => {:?}",
                 type_in_name,
-                std::any::type_name::<Out>()
-            )
-            .as_str(),
-        )
+                std::any::type_name::<Out>()))
     }
 
     fn type_name(&self, type_in: &TypeId) -> &str {
@@ -194,13 +189,8 @@ impl Registry {
 
     fn get_type_info<In: ?Sized + 'static>(&self) -> TypeInfo {
         let type_id = TypeId::of::<In>();
-        let type_info = self.type_info_map.get(&type_id).expect(
-            format!(
-                "registry does not contain a registered type info for {}",
-                std::any::type_name::<In>()
-            )
-            .as_str(),
-        );
+        let type_info = self.type_info_map.get(&type_id).unwrap_or_else(|| panic!("registry does not contain a registered type info for {}",
+                std::any::type_name::<In>()));
         type_info.clone()
     }
 }
@@ -285,7 +275,7 @@ mod tests {
     use super::*;
     use serial_test::serial;
 
-    fn reinit_global_registry() -> () {
+    fn reinit_global_registry() {
         let mut registry = global_registry().write().unwrap();
         *registry = Registry::new()
     }
@@ -319,7 +309,7 @@ mod tests {
 
     impl FooMut for String {
         fn bar_mut(&mut self) -> String {
-            self.push_str("!");
+            self.push('!');
             format!("FooMut for String ({:?})", self)
         }
     }

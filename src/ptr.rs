@@ -77,8 +77,8 @@ fn type_id_hash_u128<T: ?Sized + 'static>() -> u128 {
     let hash64 = hasher.finish();
 
     // Combine two 64-bit parts to make a u128
-    let hash128 = ((hash64 as u128) << 64) | (hash64 as u128);
-    hash128
+    
+    ((hash64 as u128) << 64) | (hash64 as u128)
 }
 
 impl<T: ?Sized + Send + 'static> OCamlDesc for DynBox<T> {
@@ -204,7 +204,7 @@ mod tests {
 
     impl std::fmt::Display for MyError {
         fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-            fmt.write_str(&self.msg.as_str())
+            fmt.write_str(self.msg.as_str())
         }
     }
 

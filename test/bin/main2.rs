@@ -37,6 +37,7 @@ fn get_nightly_toolchain_path() -> Option<PathBuf> {
     Some(nightly_toolchain_path.to_path_buf())
 }
 
+#[allow(clippy::ptr_arg)]
 fn get_json_toolchain_doc_path(toolchain_path: &PathBuf, component: &str) -> String {
     let json_path = toolchain_path
         .clone()
@@ -66,11 +67,10 @@ fn index_crate(pi: &mut PathIndex, krate: Crate) {
         })
         .for_each(|(id, summary)| {
             println!(" + {}", summary.path.join("::"));
-            match pi.insert(summary.path.clone(), (krate.clone(), id.clone())) {
-                Some((_other_krate, _other_id)) => {
-                    panic!("conflict in path index for {}", summary.path.join("::"))
-                }
-                None => (),
+            if let Some((_other_krate, _other_id)) =
+                pi.insert(summary.path.clone(), (krate.clone(), id.clone()))
+            {
+                panic!("conflict in path index for {}", summary.path.join("::"))
             }
         })
 }
@@ -88,8 +88,7 @@ fn index_rustdoc_json(
 
 fn resolve_item(item: &Item, krate: &Crate) -> String {
     if let Some(p) = krate.paths.get(&item.id) {
-        let full_path = p.path.join("::");
-        full_path
+        p.path.join("::")
     } else {
         match &item.name {
             Some(name) => name.clone(),
@@ -110,7 +109,7 @@ fn resolve_path(path: &Path, krate: &Crate) -> String {
                         .collect::<Vec<_>>()
                         .join(", ");
                     full_path.push_str(&format!("<{}>", args_str));
-                    if bindings.len() > 0 {
+                    if !bindings.is_empty() {
                         full_path.push_str(&format!(", bindings: {:?}", bindings));
                     }
                 }
@@ -191,8 +190,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let dependencies: Vec<_> = root_resolve
         .dependencies
         .iter()
-        .map(|id| metadata.packages.iter().find(|package| package.id == *id))
-        .filter_map(|x| x)
+        .filter_map(|id| metadata.packages.iter().find(|package| package.id == *id))
         .collect();
 
     let nightly_toolchain_path = get_nightly_toolchain_path().unwrap();
@@ -233,8 +231,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     dependencies.iter().for_each(|package| {
         println!(
             "Building rustdoc JSON for dependency package {} {} ...",
-            package.name,
-            package.version.to_string()
+            package.name, package.version
         );
         let maybe_json_path = rustdoc_json::Builder::default()
             .toolchain("nightly")
@@ -248,9 +245,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             Err(error) => eprintln!(
                 "Failed to build rustdoc JSON for {} {}: {}",
-                package.name,
-                package.version.to_string(),
-                error
+                package.name, package.version, error
             ),
         }
     });
