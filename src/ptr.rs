@@ -118,7 +118,10 @@ impl<T: ?Sized + Send + 'static> OCamlBinding for DynBox<T> {
             .join("|");
 
         if new_type {
-            format!("type nonrec {} = [ {} ] Ocaml_rs_smartptr.Rusty_obj.t", name, variants)
+            format!(
+                "type nonrec {} = [ {} ] Ocaml_rs_smartptr.Rusty_obj.t",
+                name, variants
+            )
         } else {
             // add the alias
             let ty_name = rename.expect("bug in ocaml-gen: rename should be Some");
