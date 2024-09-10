@@ -52,10 +52,8 @@ fn generate_type_registration(
     let mut ty = ty.clone();
     ty.path = globalize_path(&ty.path);
     let marker_traits: Vec<_> = marker_traits.iter().map(globalize_path).collect();
-    let object_safe_traits: Vec<_> = object_safe_traits
-        .iter()
-        .map(globalize_path)
-        .collect();
+    let object_safe_traits: Vec<_> =
+        object_safe_traits.iter().map(globalize_path).collect();
     let mut output = quote! {
         ocaml_rs_smartptr::registry::register_type::<#ty>();
     };
@@ -394,7 +392,7 @@ pub fn register_trait(input: TokenStream) -> TokenStream {
 #[cfg(test)]
 mod generation_tests {
     use super::*;
-    
+
     use quote::quote;
     use syn::{parse_quote, Path, TypePath};
 

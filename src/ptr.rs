@@ -77,7 +77,7 @@ fn type_id_hash_u128<T: ?Sized + 'static>() -> u128 {
     let hash64 = hasher.finish();
 
     // Combine two 64-bit parts to make a u128
-    
+
     ((hash64 as u128) << 64) | (hash64 as u128)
 }
 
