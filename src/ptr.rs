@@ -194,7 +194,8 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::register_trait;
+    use crate as ocaml_rs_smartptr; // For proc macro use below to work
+    use crate::register_type;
     use serial_test::serial;
 
     #[derive(Debug)]
@@ -218,7 +219,11 @@ mod tests {
     #[test]
     #[serial(registry)]
     fn test_bla() {
-        register_trait!(MyError, dyn std::error::Error + Send);
+        register_type!({
+            ty: crate::ptr::tests::MyError,
+            marker_traits: [core::marker::Send],
+            object_safe_traits: [std::error::Error],
+        });
         let error = MyError {
             msg: String::from("bla-bla-bla"),
         };

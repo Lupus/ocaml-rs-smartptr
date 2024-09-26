@@ -8,6 +8,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 path = "src/lib.rs"
 
 [dependencies]
+ocaml-rs-smartptr-macro = { path = "macro", version = "*" }
 ocaml = "1.0.1"
 owning_ref = "0.4.1"
 stable_deref_trait = "1.2"

@@ -473,11 +473,22 @@ version = "0.1.0"
 dependencies = [
  "ocaml 1.0.1",
  "ocaml-gen",
+ "ocaml-rs-smartptr-macro",
  "owning_ref",
  "regex",
  "serial_test",
  "stable_deref_trait",
  "static_assertions",
+]
+
+[[package]]
+name = "ocaml-rs-smartptr-macro"
+version = "0.1.0"
+dependencies = [
+ "prettyplease",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.77",
 ]
 
 [[package]]
@@ -493,7 +504,6 @@ dependencies = [
  "ocaml-build",
  "ocaml-gen",
  "ocaml-rs-smartptr",
- "proc-macro-crate",
  "rustdoc-json",
  "rustdoc-types",
  "serde_json",
@@ -597,16 +607,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "479cf940fbbb3426c32c5d5176f62ad57549a0bb84773423ba8be9d089f5faba"
 dependencies = [
  "proc-macro2",
- "syn 2.0.77",
-]
-
-[[package]]
-name = "proc-macro-crate"
-version = "0.1.0"
-dependencies = [
- "prettyplease",
- "proc-macro2",
- "quote",
  "syn 2.0.77",
 ]
 

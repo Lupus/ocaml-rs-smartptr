@@ -258,30 +258,21 @@ pub fn get_type_info<In: ?Sized + 'static>() -> TypeInfo {
     registry.get_type_info::<In>()
 }
 
-#[macro_export]
-macro_rules! register_type {
-    ($type:ty) => {
-        $crate::registry::register_type::<$type>();
-        $crate::registry::register::<$type, $type>(|x: &$type| x, |x: &mut $type| x);
-    };
-}
-
-#[macro_export]
-macro_rules! register_trait {
-    ($type:ty, $($trait:tt)+) => {
-        $crate::registry::register_type::<$type>();
-        $crate::registry::register_type::<$($trait)+>();
-        $crate::registry::register::<$type, $($trait)+>(
-            |x: &$type| x as &($($trait)+),
-            |x: &mut $type| x as &mut ($($trait)+)
-        );
-    };
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use serial_test::serial;
+
+    macro_rules! register_trait {
+        ($type:ty, $($trait:tt)+) => {
+            $crate::registry::register_type::<$type>();
+            $crate::registry::register_type::<$($trait)+>();
+            $crate::registry::register::<$type, $($trait)+>(
+                |x: &$type| x as &($($trait)+),
+                |x: &mut $type| x as &mut ($($trait)+)
+            );
+        };
+    }
 
     fn reinit_global_registry() {
         let mut registry = global_registry().write().unwrap();

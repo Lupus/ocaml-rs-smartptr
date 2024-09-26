@@ -1,7 +1,7 @@
 use crate::animals;
 use ctor::ctor;
 use ocaml_rs_smartptr::ptr::DynBox;
-use proc_macro_crate::{register_trait, register_type};
+use ocaml_rs_smartptr::{register_trait, register_type};
 
 extern crate derive_more;
 use derive_more::AsRef;
