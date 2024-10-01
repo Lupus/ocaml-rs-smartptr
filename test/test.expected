@@ -1,3 +1,10 @@
+
+*** Sheep test
 dolly pauses briefly... baaaaah!
 dolly gets a haircut!
 dolly pauses briefly... baaaaah?
+
+*** Wolf test
+big bad wolf says rrrrrr!
+(wolf gets modified inside a callback!)
+big bad wolf says rrrrrr... I'm hugr-r-r-ry!

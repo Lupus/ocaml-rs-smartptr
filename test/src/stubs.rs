@@ -1,5 +1,6 @@
 use crate::animals;
 use ctor::ctor;
+use ocaml_rs_smartptr::func::OCamlFunc;
 use ocaml_rs_smartptr::ptr::DynBox;
 use ocaml_rs_smartptr::{register_trait, register_type};
 
@@ -100,6 +101,31 @@ pub type Wolf = animals::Wolf;
 pub fn wolf_create(name: String) -> DynBox<Wolf> {
     let wolf: Wolf = animals::Animal::new(name);
     wolf.into()
+}
+
+#[ocaml_gen::func]
+#[ocaml::func]
+pub fn wolf_set_hungry(wolf: DynBox<Wolf>, hungry: bool) {
+    let mut wolf = wolf.coerce_mut();
+    wolf.set_hungry(hungry);
+}
+
+// OCamlFunc bindings
+
+#[ocaml_gen::func]
+#[ocaml::func]
+pub fn call_cb(
+    wolf: DynBox<Wolf>,
+    cb: OCamlFunc<(DynBox<Wolf>,), DynBox<Animal>>,
+) -> DynBox<Animal> {
+    /* Check that doing funny things with clones of OCamlFunc do not explode
+     * boxroots */
+    let cb2 = cb.clone();
+    drop(cb);
+    let res = cb2.call(gc, (wolf,));
+    drop(cb2.clone());
+    drop(cb2);
+    res
 }
 
 // Register supported traits for types that we bind

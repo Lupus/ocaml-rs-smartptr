@@ -62,13 +62,23 @@ impl Animal for Sheep {
 
 pub struct Wolf {
     name: String,
+    hungry: bool,
+}
+
+impl Wolf {
+    pub fn set_hungry(&mut self, hungry: bool) {
+        self.hungry = hungry
+    }
 }
 
 // Implement the `Animal` trait for `Wolf`.
 impl Animal for Wolf {
     // `Self` is the implementor type: `Wolf`.
     fn new(name: String) -> Wolf {
-        Wolf { name }
+        Wolf {
+            name,
+            hungry: false,
+        }
     }
 
     fn name(&self) -> String {
@@ -76,6 +86,10 @@ impl Animal for Wolf {
     }
 
     fn noise(&self) -> String {
-        "rrrrrr!".into()
+        if self.hungry {
+            "rrrrrr... I'm hugr-r-r-ry!".into()
+        } else {
+            "rrrrrr!".into()
+        }
     }
 }

@@ -29,6 +29,11 @@ fn main() -> std::io::Result<()> {
     ocaml_gen::decl_module!(w, env, "Wolf", {
         ocaml_gen::decl_type!(w, env, DynBox<Wolf> => "t");
         ocaml_gen::decl_func!(w, env, wolf_create => "create");
+        ocaml_gen::decl_func!(w, env, wolf_set_hungry => "set_hungry");
+    });
+
+    ocaml_gen::decl_module!(w, env, "Test_callback", {
+        ocaml_gen::decl_func!(w, env, call_cb => "call_cb");
     });
 
     io::stdout().write_all(w.as_bytes())?;

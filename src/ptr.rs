@@ -1,7 +1,8 @@
-use ocaml_gen::{OCamlBinding, OCamlDesc};
+use highway::{HighwayHash, HighwayHasher};
+use ocaml_gen::{const_random, OCamlBinding, OCamlDesc};
 use static_assertions::{assert_impl_all, assert_not_impl_all};
 use std::any::{Any, TypeId};
-use std::hash::{Hash, Hasher};
+use std::hash::Hash;
 use std::marker::PhantomData;
 use std::sync::{Arc, Mutex, RwLock};
 
@@ -69,18 +70,6 @@ impl<T: 'static + Send + ?Sized> Clone for DynBox<T> {
     }
 }
 
-// Function to get u128 hash of a TypeId
-fn type_id_hash_u128<T: ?Sized + 'static>() -> u128 {
-    let type_id = TypeId::of::<T>();
-    let mut hasher = std::hash::DefaultHasher::new();
-    type_id.hash(&mut hasher);
-    let hash64 = hasher.finish();
-
-    // Combine two 64-bit parts to make a u128
-
-    ((hash64 as u128) << 64) | (hash64 as u128)
-}
-
 impl<T: ?Sized + Send + 'static> OCamlDesc for DynBox<T> {
     fn ocaml_desc(env: &::ocaml_gen::Env, _generics: &[&str]) -> String {
         let type_id = <Self as OCamlDesc>::unique_id();
@@ -89,7 +78,17 @@ impl<T: ?Sized + Send + 'static> OCamlDesc for DynBox<T> {
     }
 
     fn unique_id() -> u128 {
-        type_id_hash_u128::<T>()
+        let key = highway::Key([
+            const_random!(u64),
+            const_random!(u64),
+            const_random!(u64),
+            const_random!(u64),
+        ]);
+        let mut hasher = HighwayHasher::new(key);
+        let type_id = TypeId::of::<T>();
+        type_id.hash(&mut hasher);
+        let result = hasher.finalize128();
+        (result[0] as u128) | ((result[1] as u128) << 64)
     }
 }
 
