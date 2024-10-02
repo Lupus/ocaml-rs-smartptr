@@ -1,4 +1,4 @@
-mod callable;
+pub mod callable;
 pub mod func;
 pub mod ml_box;
 pub mod ptr;
