@@ -19,6 +19,7 @@ paste = "1.0.15"
 rand = "0.8.5"
 highway = "1.2.0"
 inventory = "0.3.15"
+derive_more = { version="1.0.0", features = ["full"] }
 
 [dev-dependencies]
 serial_test = "*"

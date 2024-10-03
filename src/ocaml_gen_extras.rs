@@ -1,5 +1,13 @@
+use derive_more::{
+    derive::{AsMut, AsRef, Deref, DerefMut},
+    From, Into,
+};
+
 use ocaml_gen::{OCamlBinding, OCamlDesc};
 
+use crate::ptr::DynBox;
+
+#[derive(From, Into, Deref, DerefMut)]
 pub struct PolymorphicValue<const C: char>(ocaml::Value);
 
 impl<const C: char> ocaml_gen::OCamlDesc for PolymorphicValue<C> {
@@ -24,30 +32,23 @@ unsafe impl<const C: char> ocaml::FromValue for PolymorphicValue<C> {
     }
 }
 
-impl<const C: char> From<ocaml::Value> for PolymorphicValue<C> {
-    fn from(value: ocaml::Value) -> Self {
-        Self(value)
-    }
-}
+#[derive(From, Deref, DerefMut, AsRef, AsMut)]
+pub struct WithTypeParam<const C: char, T: ocaml::FromValue + ocaml::ToValue>(T);
 
-impl<const C: char> Into<ocaml::Value> for PolymorphicValue<C> {
-    fn into(self) -> ocaml::Value {
-        self.0
-    }
-}
-
-pub struct WithTypeParam<T: ocaml::FromValue + ocaml::ToValue, const C: char>(T);
-
-impl<T: ocaml::FromValue + ocaml::ToValue + OCamlDesc, const C: char>
-    WithTypeParam<T, C>
+impl<const C: char, T: ocaml::FromValue + ocaml::ToValue + OCamlDesc>
+    WithTypeParam<C, T>
 {
     pub fn new(v: T) -> Self {
         Self(v)
     }
+
+    pub fn into_inner(self) -> T {
+        self.0
+    }
 }
 
-impl<T: ocaml::FromValue + ocaml::ToValue + OCamlDesc, const C: char> OCamlDesc
-    for WithTypeParam<T, C>
+impl<const C: char, T: ocaml::FromValue + ocaml::ToValue + OCamlDesc> OCamlDesc
+    for WithTypeParam<C, T>
 {
     fn ocaml_desc(env: &ocaml_gen::Env, generics: &[&str]) -> String {
         format!("('{} {})", C, T::ocaml_desc(env, generics))
@@ -68,7 +69,7 @@ fn insert_type_params(
         let insert_index = type_index + type_nonrec.len();
         let mut result = String::from(&input_string[..insert_index]);
         result.push_str(type_params);
-        result.push_str(" ");
+        result.push(' ');
         result.push_str(&input_string[insert_index..]);
         Ok(result)
     } else {
@@ -76,8 +77,8 @@ fn insert_type_params(
     }
 }
 
-impl<T: ocaml::FromValue + ocaml::ToValue + OCamlBinding + OCamlDesc, const C: char>
-    OCamlBinding for WithTypeParam<T, C>
+impl<const C: char, T: ocaml::FromValue + ocaml::ToValue + OCamlBinding + OCamlDesc>
+    OCamlBinding for WithTypeParam<C, T>
 {
     fn ocaml_binding(
         env: &mut ::ocaml_gen::Env,
@@ -99,26 +100,27 @@ impl<T: ocaml::FromValue + ocaml::ToValue + OCamlBinding + OCamlDesc, const C: c
     }
 }
 
-unsafe impl<T: ocaml::FromValue + ocaml::ToValue, const C: char> ocaml::ToValue
-    for WithTypeParam<T, C>
+unsafe impl<const C: char, T: ocaml::FromValue + ocaml::ToValue> ocaml::ToValue
+    for WithTypeParam<C, T>
 {
     fn to_value(&self, gc: &ocaml::Runtime) -> ocaml::Value {
         self.0.to_value(gc)
     }
 }
 
-unsafe impl<T: ocaml::FromValue + ocaml::ToValue, const C: char> ocaml::FromValue
-    for WithTypeParam<T, C>
+unsafe impl<const C: char, T: ocaml::FromValue + ocaml::ToValue> ocaml::FromValue
+    for WithTypeParam<C, T>
 {
     fn from_value(v: ocaml::Value) -> Self {
         Self(T::from_value(v))
     }
 }
 
-impl<T: ocaml::FromValue + ocaml::ToValue, const C: char> From<T>
-    for WithTypeParam<T, C>
+impl<T, const C: char> From<T> for WithTypeParam<C, DynBox<T>>
+where
+    T: Send + 'static,
 {
     fn from(value: T) -> Self {
-        Self(value)
+        Self(value.into())
     }
 }
