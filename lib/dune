@@ -1,3 +1,4 @@
 (library
  (name ocaml_rs_smartptr)
- (public_name ocaml-rs-smartptr))
+ (public_name ocaml-rs-smartptr)
+ (flags (-linkall)))

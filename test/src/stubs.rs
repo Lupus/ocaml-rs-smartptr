@@ -1,8 +1,7 @@
 use crate::animals;
-use ctor::ctor;
 use ocaml_rs_smartptr::func::OCamlFunc;
 use ocaml_rs_smartptr::ptr::DynBox;
-use ocaml_rs_smartptr::{register_trait, register_type};
+use ocaml_rs_smartptr::{register_rtti, register_trait, register_type};
 
 extern crate derive_more;
 use derive_more::AsRef;
@@ -128,9 +127,7 @@ pub fn call_cb(
     res
 }
 
-// Register supported traits for types that we bind
-#[ctor]
-fn register_rtti() {
+register_rtti! {
     register_trait!(
         {
             ty: crate::stubs::AnimalProxy,

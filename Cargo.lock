@@ -151,16 +151,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a81dae078cea95a014a339291cec439d2f232ebe854a9d672b796c6afafa9b7"
 
 [[package]]
-name = "ctor"
-version = "0.2.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "edb49164822f3ee45b17acd4a208cfc1251410cf0cad9a833234c9890774dd9f"
-dependencies = [
- "quote",
- "syn 2.0.77",
-]
-
-[[package]]
 name = "cty"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -337,6 +327,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "inventory"
+version = "0.3.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f958d3d68f4167080a18141e10381e7634563984a537f2a49a30fd8e53ac5767"
+
+[[package]]
 name = "itoa"
 version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -484,6 +480,7 @@ name = "ocaml-rs-smartptr"
 version = "0.1.0"
 dependencies = [
  "highway",
+ "inventory",
  "ocaml 1.0.1",
  "ocaml-gen",
  "ocaml-rs-smartptr-macro",
@@ -513,7 +510,6 @@ dependencies = [
  "cargo-lock",
  "cargo_metadata",
  "codegen",
- "ctor",
  "derive_more",
  "ocaml 1.0.1",
  "ocaml-build",

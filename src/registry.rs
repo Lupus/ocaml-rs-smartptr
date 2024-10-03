@@ -2,7 +2,7 @@ use std::any::{Any, TypeId};
 use std::collections::HashMap;
 use std::ops::{Deref, DerefMut};
 use std::sync::{
-    Arc, Mutex, MutexGuard, OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard,
+    Arc, Mutex, MutexGuard, Once, OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard,
 };
 
 use owning_ref::{ErasedBoxRef, ErasedBoxRefMut, OwningHandle, OwningRef, OwningRefMut};
@@ -256,6 +256,32 @@ pub fn get_type_info<In: ?Sized + 'static>() -> TypeInfo {
         .read()
         .expect("unable to obtain read lock on global registry");
     registry.get_type_info::<In>()
+}
+
+pub struct Plugin {
+    initializer: fn(),
+}
+
+impl Plugin {
+    pub const fn new(initializer: fn()) -> Self {
+        Plugin { initializer }
+    }
+
+    fn initialize(&self) {
+        (self.initializer)();
+    }
+}
+
+inventory::collect!(Plugin);
+
+static INIT: Once = Once::new();
+
+pub fn initialize_plugins() {
+    INIT.call_once(|| {
+        for plugin in inventory::iter::<Plugin> {
+            plugin.initialize();
+        }
+    });
 }
 
 #[cfg(test)]
