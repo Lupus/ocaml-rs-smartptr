@@ -32,14 +32,61 @@ unsafe impl<const C: char> ocaml::FromValue for PolymorphicValue<C> {
     }
 }
 
-#[derive(From, Deref, DerefMut, AsRef, AsMut)]
-pub struct WithTypeParam<const C: char, T: ocaml::FromValue + ocaml::ToValue>(T);
+use std::marker::PhantomData;
 
-impl<const C: char, T: ocaml::FromValue + ocaml::ToValue + OCamlDesc>
-    WithTypeParam<C, T>
+pub trait TypeParams {
+    fn params_string() -> String;
+    fn params_count() -> usize;
+}
+
+pub struct P1<const C: char>;
+
+impl<const C: char> TypeParams for P1<C> {
+    fn params_string() -> String {
+        format!("'{}", C)
+    }
+    fn params_count() -> usize {
+        1
+    }
+}
+
+pub struct P2<const C1: char, const C2: char>;
+
+impl<const C1: char, const C2: char> TypeParams for P2<C1, C2> {
+    fn params_string() -> String {
+        format!("'{} '{}", C1, C2)
+    }
+    fn params_count() -> usize {
+        2
+    }
+}
+
+pub struct P3<const C1: char, const C2: char, const C3: char>;
+
+impl<const C1: char, const C2: char, const C3: char> TypeParams for P3<C1, C2, C3> {
+    fn params_string() -> String {
+        format!("'{} '{} '{}", C1, C2, C3)
+    }
+    fn params_count() -> usize {
+        3
+    }
+}
+
+#[derive(From, Deref, DerefMut, AsRef, AsMut)]
+pub struct WithTypeParams<P: TypeParams, T: ocaml::FromValue + ocaml::ToValue>(
+    #[deref]
+    #[deref_mut]
+    #[as_ref]
+    #[as_mut]
+    T,
+    PhantomData<P>,
+);
+
+impl<P: TypeParams, T: ocaml::FromValue + ocaml::ToValue + OCamlDesc>
+    WithTypeParams<P, T>
 {
     pub fn new(v: T) -> Self {
-        Self(v)
+        Self(v, PhantomData)
     }
 
     pub fn into_inner(self) -> T {
@@ -47,11 +94,11 @@ impl<const C: char, T: ocaml::FromValue + ocaml::ToValue + OCamlDesc>
     }
 }
 
-impl<const C: char, T: ocaml::FromValue + ocaml::ToValue + OCamlDesc> OCamlDesc
-    for WithTypeParam<C, T>
+impl<P: TypeParams, T: ocaml::FromValue + ocaml::ToValue + OCamlDesc> OCamlDesc
+    for WithTypeParams<P, T>
 {
     fn ocaml_desc(env: &ocaml_gen::Env, generics: &[&str]) -> String {
-        format!("('{} {})", C, T::ocaml_desc(env, generics))
+        format!("({} {})", P::params_string(), T::ocaml_desc(env, generics))
     }
 
     fn unique_id() -> u128 {
@@ -77,8 +124,8 @@ fn insert_type_params(
     }
 }
 
-impl<const C: char, T: ocaml::FromValue + ocaml::ToValue + OCamlBinding + OCamlDesc>
-    OCamlBinding for WithTypeParam<C, T>
+impl<P: TypeParams, T: ocaml::FromValue + ocaml::ToValue + OCamlBinding + OCamlDesc>
+    OCamlBinding for WithTypeParams<P, T>
 {
     fn ocaml_binding(
         env: &mut ::ocaml_gen::Env,
@@ -89,38 +136,44 @@ impl<const C: char, T: ocaml::FromValue + ocaml::ToValue + OCamlBinding + OCamlD
 
         if new_type {
             let orig = T::ocaml_binding(env, rename, new_type);
-            insert_type_params(&orig, format!("'{}", C).as_str()).unwrap()
+            insert_type_params(&orig, &P::params_string()).unwrap()
         } else {
             let name = Self::ocaml_desc(env, &[]);
             let ty_name = rename.expect("bug in ocaml-gen: rename should be Some");
             env.add_alias(ty_id, ty_name);
 
-            format!("type nonrec '{} {} = '{} {}", C, ty_name, C, name)
+            format!(
+                "type nonrec {} {} = {} {}",
+                P::params_string(),
+                ty_name,
+                P::params_string(),
+                name
+            )
         }
     }
 }
 
-unsafe impl<const C: char, T: ocaml::FromValue + ocaml::ToValue> ocaml::ToValue
-    for WithTypeParam<C, T>
+unsafe impl<P: TypeParams, T: ocaml::FromValue + ocaml::ToValue> ocaml::ToValue
+    for WithTypeParams<P, T>
 {
     fn to_value(&self, gc: &ocaml::Runtime) -> ocaml::Value {
         self.0.to_value(gc)
     }
 }
 
-unsafe impl<const C: char, T: ocaml::FromValue + ocaml::ToValue> ocaml::FromValue
-    for WithTypeParam<C, T>
+unsafe impl<P: TypeParams, T: ocaml::FromValue + ocaml::ToValue> ocaml::FromValue
+    for WithTypeParams<P, T>
 {
     fn from_value(v: ocaml::Value) -> Self {
-        Self(T::from_value(v))
+        Self(T::from_value(v), PhantomData)
     }
 }
 
-impl<T, const C: char> From<T> for WithTypeParam<C, DynBox<T>>
+impl<T, P: TypeParams> From<T> for WithTypeParams<P, DynBox<T>>
 where
     T: Send + 'static,
 {
     fn from(value: T) -> Self {
-        Self(value.into())
+        Self(value.into(), PhantomData)
     }
 }
