@@ -8,7 +8,10 @@ use std::panic::UnwindSafe;
 #[derive(Debug, Clone)]
 pub struct OCamlFunc<Args, Ret>(MlBox, PhantomData<(Args, Ret)>);
 
+/* As OCamlFunc is a wraper on top of MlBox, we mark OCamlFunc as Send + Sync +
+ * UnwindSafe as MlBox itself */
 unsafe impl<Args, Ret> Send for OCamlFunc<Args, Ret> {}
+unsafe impl<Args, Ret> Sync for OCamlFunc<Args, Ret> {}
 impl<Args, Ret> UnwindSafe for OCamlFunc<Args, Ret> {}
 
 impl<Args, Ret> OCamlFunc<Args, Ret> {

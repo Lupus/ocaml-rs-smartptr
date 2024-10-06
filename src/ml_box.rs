@@ -16,7 +16,13 @@ pub struct MlBox {
     inner: Arc<ocaml::root::Root>,
 }
 
+/* box root is just a pointer, wrapped by Arc, so MlBox is thus safe to send to
+ * other threads */
 unsafe impl Send for MlBox {}
+/* all methods of MlBox require OCaml runtime, and thus can not be concurrently
+ * run from different threads, making MlBox Sync, the only exception is .clone(),
+ * but that is handled by Arc, so it's perfectly Sync too */
+unsafe impl Sync for MlBox {}
 impl UnwindSafe for MlBox {}
 
 impl MlBox {
