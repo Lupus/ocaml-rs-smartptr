@@ -1,4 +1,4 @@
-use std::panic::UnwindSafe;
+use std::panic::{AssertUnwindSafe, RefUnwindSafe, UnwindSafe};
 use std::sync::Arc;
 
 use derive_more::derive::Display;
@@ -13,7 +13,7 @@ use derive_more::derive::Display;
 #[derive(Clone, Debug, Display)]
 #[display("MlBox<{:?}>", inner)]
 pub struct MlBox {
-    inner: Arc<ocaml::root::Root>,
+    inner: Arc<AssertUnwindSafe<ocaml::root::Root>>,
 }
 
 /* box root is just a pointer, wrapped by Arc, so MlBox is thus safe to send to
@@ -23,7 +23,8 @@ unsafe impl Send for MlBox {}
  * run from different threads, making MlBox Sync, the only exception is .clone(),
  * but that is handled by Arc, so it's perfectly Sync too */
 unsafe impl Sync for MlBox {}
-impl UnwindSafe for MlBox {}
+
+assert_impl_all!(MlBox: Send, Sync, UnwindSafe, RefUnwindSafe);
 
 impl MlBox {
     /// Creates a new MlBox out of ocaml::Value, takes OCaml runtime handle to
@@ -35,7 +36,9 @@ impl MlBox {
                  * to avoid it from being garbage collected by the OCaml GC */
                 Self {
                     #[allow(clippy::arc_with_non_send_sync)]
-                    inner: Arc::new(unsafe { ocaml::root::Root::new(v) }),
+                    inner: Arc::new(AssertUnwindSafe(unsafe {
+                        ocaml::root::Root::new(v)
+                    })),
                 }
             }
             ocaml::Value::Root(r) => {
@@ -43,7 +46,7 @@ impl MlBox {
                  * ouf of it and safely proceed with it further */
                 Self {
                     #[allow(clippy::arc_with_non_send_sync)]
-                    inner: Arc::new(r),
+                    inner: Arc::new(AssertUnwindSafe(r)),
                 }
             }
         }
@@ -55,7 +58,9 @@ impl MlBox {
     /// can be used when you're sure that you have only one reference to MlBox,
     /// in this case using this method can save on new boxroot allocation.
     pub fn into_value(self, _gc: &ocaml::Runtime) -> Option<ocaml::Value> {
-        Arc::into_inner(self.inner).map(ocaml::Value::Root)
+        Arc::into_inner(self.inner)
+            .map(|x| x.0)
+            .map(ocaml::Value::Root)
     }
 
     /// Creates a new rooted ocaml::Value, root is obtained by recovering value
@@ -68,7 +73,8 @@ impl MlBox {
         // `ocaml::root::Root` is generally not safe to do unless OCaml domain
         // lock is held - hence this function ensures that we have OCaml runtime
         // reference to maintain the safety guarantees
-        let new_root = self.inner.as_ref().clone();
-        ocaml::Value::Root(new_root)
+        let AssertUnwindSafe(new_root): &AssertUnwindSafe<ocaml::root::Root> =
+            self.inner.as_ref();
+        ocaml::Value::Root(new_root.clone())
     }
 }

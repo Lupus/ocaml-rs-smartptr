@@ -13,6 +13,9 @@ pub use ocaml_rs_smartptr_macro::register_type;
 
 pub use inventory;
 
+#[macro_use]
+extern crate static_assertions;
+
 #[macro_export]
 macro_rules! register_rtti {
     ($($code:tt)*) => {

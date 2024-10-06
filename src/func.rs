@@ -3,26 +3,27 @@ use ocaml_gen::OCamlDesc;
 use crate::callable::Callable;
 use crate::ml_box::MlBox;
 use std::marker::PhantomData;
-use std::panic::UnwindSafe;
+use std::panic::{AssertUnwindSafe, RefUnwindSafe, UnwindSafe};
 
 #[derive(Debug)]
-pub struct OCamlFunc<Args, Ret>(MlBox, PhantomData<(Args, Ret)>);
+pub struct OCamlFunc<Args, Ret>(MlBox, AssertUnwindSafe<PhantomData<(Args, Ret)>>);
 
-/* As OCamlFunc is a wraper on top of MlBox, we mark OCamlFunc as Send + Sync +
- * UnwindSafe as MlBox itself */
+/* As OCamlFunc is a wraper on top of MlBox, we mark OCamlFunc as Send + Sync as
+ * MlBox itself */
 unsafe impl<Args, Ret> Send for OCamlFunc<Args, Ret> {}
 unsafe impl<Args, Ret> Sync for OCamlFunc<Args, Ret> {}
-impl<Args, Ret> UnwindSafe for OCamlFunc<Args, Ret> {}
+
+assert_impl_all!(OCamlFunc<(ocaml::Value,),ocaml::Value>: Send, Sync, UnwindSafe, RefUnwindSafe);
 
 impl<Args, Ret> OCamlFunc<Args, Ret> {
     pub fn new(gc: &ocaml::Runtime, v: ocaml::Value) -> Self {
-        OCamlFunc(MlBox::new(gc, v), PhantomData)
+        OCamlFunc(MlBox::new(gc, v), AssertUnwindSafe(PhantomData))
     }
 }
 
 impl<Args, Ret> Clone for OCamlFunc<Args, Ret> {
     fn clone(&self) -> Self {
-        OCamlFunc(self.0.clone(), PhantomData)
+        OCamlFunc(self.0.clone(), AssertUnwindSafe(PhantomData))
     }
 }
 
