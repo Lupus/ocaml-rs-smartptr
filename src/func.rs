@@ -5,7 +5,7 @@ use crate::ml_box::MlBox;
 use std::marker::PhantomData;
 use std::panic::UnwindSafe;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct OCamlFunc<Args, Ret>(MlBox, PhantomData<(Args, Ret)>);
 
 /* As OCamlFunc is a wraper on top of MlBox, we mark OCamlFunc as Send + Sync +
@@ -17,6 +17,12 @@ impl<Args, Ret> UnwindSafe for OCamlFunc<Args, Ret> {}
 impl<Args, Ret> OCamlFunc<Args, Ret> {
     pub fn new(gc: &ocaml::Runtime, v: ocaml::Value) -> Self {
         OCamlFunc(MlBox::new(gc, v), PhantomData)
+    }
+}
+
+impl<Args, Ret> Clone for OCamlFunc<Args, Ret> {
+    fn clone(&self) -> Self {
+        OCamlFunc(self.0.clone(), PhantomData)
     }
 }
 
