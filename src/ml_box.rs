@@ -1,4 +1,7 @@
+use std::panic::UnwindSafe;
 use std::sync::Arc;
+
+use derive_more::derive::Display;
 
 /// It's safe to send ocaml::root::Root across threads as long as access to
 /// OCaml domain is properly synchronized. This wrapper type allows to send
@@ -7,12 +10,14 @@ use std::sync::Arc;
 /// As cloning of `ocaml::root::Root` is not safe outside of OCaml Domain lock
 /// (see comments in `as_value` method below), we wrap it with Arc to enable
 /// safe cloning of MlBox from Rust
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Display)]
+#[display("MlBox<{:?}>", inner)]
 pub struct MlBox {
     inner: Arc<ocaml::root::Root>,
 }
 
 unsafe impl Send for MlBox {}
+impl UnwindSafe for MlBox {}
 
 impl MlBox {
     /// Creates a new MlBox out of ocaml::Value, takes OCaml runtime handle to

@@ -6,7 +6,7 @@ use paste::paste;
 
 pub trait Callable<Ret>
 where
-    Ret: ocaml::FromValue + OCamlDesc + Send,
+    Ret: ocaml::FromValue + OCamlDesc,
 {
     fn call_with(&self, gc: &ocaml::Runtime, func: ocaml::Value) -> Ret;
     fn describe_args(env: &::ocaml_gen::Env, generics: &[&str]) -> Vec<String>;
@@ -41,7 +41,7 @@ where
     }
 }
 
-impl<Ret: ocaml::FromValue + OCamlDesc + Send> Callable<Ret> for () {
+impl<Ret: ocaml::FromValue + OCamlDesc> Callable<Ret> for () {
     fn call_with(&self, gc: &ocaml::Runtime, func: ocaml::Value) -> Ret {
         self.process_result(unsafe { func.call1(gc, ()) })
     }
@@ -101,7 +101,7 @@ macro_rules! impl_callable_for_tuple {
                 $(
                     [<T $idx>]: ocaml::ToValue + OCamlDesc,
                 )*
-                Ret: ocaml::FromValue + OCamlDesc + Send,
+                Ret: ocaml::FromValue + OCamlDesc,
             > Callable<Ret> for ($(
                 [<T $idx>],
             )*)
