@@ -78,3 +78,9 @@ impl MlBox {
         ocaml::Value::Root(new_root.clone())
     }
 }
+
+unsafe impl ocaml::ToValue for MlBox {
+    fn to_value(&self, gc: &ocaml::Runtime) -> ocaml::Value {
+        self.as_value(gc)
+    }
+}
