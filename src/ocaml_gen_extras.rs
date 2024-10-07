@@ -54,7 +54,7 @@ pub struct P2<const C1: char, const C2: char>;
 
 impl<const C1: char, const C2: char> TypeParams for P2<C1, C2> {
     fn params_string() -> String {
-        format!("'{} '{}", C1, C2)
+        format!("('{}, '{})", C1, C2)
     }
     fn params_count() -> usize {
         2
@@ -65,7 +65,7 @@ pub struct P3<const C1: char, const C2: char, const C3: char>;
 
 impl<const C1: char, const C2: char, const C3: char> TypeParams for P3<C1, C2, C3> {
     fn params_string() -> String {
-        format!("'{} '{} '{}", C1, C2, C3)
+        format!("('{}, '{}, '{})", C1, C2, C3)
     }
     fn params_count() -> usize {
         3
