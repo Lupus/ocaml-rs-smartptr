@@ -1,0 +1,7 @@
+(rule
+ (alias runtest)
+ (targets Ocaml_rs_smartptr_test.ml)
+ (deps stubs-gen.rs)
+ (locks cargo-build)
+ (action
+  (run cargo run --offline --package stubs-gen --bin stubs-gen)))

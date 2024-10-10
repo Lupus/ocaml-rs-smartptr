@@ -28,5 +28,6 @@ serial_test = "*"
 members = [
     ".",
     "macro",
-    "test"
+    "test",
+    "stubs-gen",
 ]

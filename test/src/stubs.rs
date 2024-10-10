@@ -1,7 +1,9 @@
 use crate::animals;
 use ocaml_rs_smartptr::func::OCamlFunc;
 use ocaml_rs_smartptr::ptr::DynBox;
-use ocaml_rs_smartptr::{register_rtti, register_trait, register_type};
+use ocaml_rs_smartptr::{
+    ocaml_gen_bindings, register_rtti, register_trait, register_type,
+};
 
 extern crate derive_more;
 use derive_more::AsRef;
@@ -127,6 +129,7 @@ pub fn call_cb(
     res
 }
 
+// Register types & traits
 register_rtti! {
     register_trait!(
         {
@@ -148,4 +151,31 @@ register_rtti! {
             object_safe_traits: [crate::stubs::AnimalProxy],
         }
     );
+}
+
+// OCaml bindings generation
+ocaml_gen_bindings! {
+    decl_module!("Animal", {
+        decl_type!(DynBox<Animal> => "t");
+        decl_func!(animal_name => "name");
+        decl_func!(animal_noise => "noise");
+        decl_func!(animal_talk => "talk");
+    });
+
+    decl_module!("Sheep", {
+        decl_type!(DynBox<Sheep> => "t");
+        decl_func!(sheep_create => "create");
+        decl_func!(sheep_is_naked => "is_naked");
+        decl_func!(sheep_sheer => "sheer");
+    });
+
+    decl_module!("Wolf", {
+        decl_type!(DynBox<Wolf> => "t");
+        decl_func!(wolf_create => "create");
+        decl_func!(wolf_set_hungry => "set_hungry");
+    });
+
+    decl_module!("Test_callback", {
+        decl_func!(call_cb => "call_cb");
+    });
 }

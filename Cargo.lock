@@ -430,16 +430,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ocaml-build"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d51b05aa0083eaec54b22a3f2a3d49175e04b4fb77ca7abb5a85731736239c3"
-dependencies = [
- "proc-macro2",
- "syn 2.0.77",
-]
-
-[[package]]
 name = "ocaml-derive"
 version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -535,7 +525,6 @@ dependencies = [
  "codegen",
  "derive_more 0.99.18",
  "ocaml 1.0.1",
- "ocaml-build",
  "ocaml-gen",
  "ocaml-rs-smartptr",
  "rustdoc-json",
@@ -905,6 +894,15 @@ name = "static_assertions"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
+
+[[package]]
+name = "stubs-gen"
+version = "0.1.0"
+dependencies = [
+ "ocaml-gen",
+ "ocaml-rs-smartptr",
+ "ocaml-rs-smartptr-test",
+]
 
 [[package]]
 name = "syn"

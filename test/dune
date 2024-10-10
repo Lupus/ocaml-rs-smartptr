@@ -3,6 +3,15 @@
  (libraries test_lib ocaml_rs_smartptr_test_stubs))
 
 (rule
+ (action
+  (copy %{workspace_root}/stubs-gen/Ocaml_rs_smartptr_test.ml Stubs.ml.new)))
+
+(rule
+ (alias runtest)
+ (action
+  (diff Stubs.ml Stubs.ml.new)))
+
+(rule
  (with-stdout-to
   test.out
   (run ./test.exe)))

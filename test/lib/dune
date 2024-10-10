@@ -3,10 +3,7 @@
  (libraries ocaml-rs-smartptr))
 
 (rule
- (targets
-  libocaml_rs_smartptr_test.a
-  dllocaml_rs_smartptr_test.so
-  bindings.ml)
+ (targets libocaml_rs_smartptr_test.a dllocaml_rs_smartptr_test.so)
  (deps (universe))
  (locks cargo-build)
  (action
@@ -19,18 +16,7 @@
    (run
     mv
     %{workspace_root}/../../target/release/libocaml_rs_smartptr_test.so
-    dllocaml_rs_smartptr_test.so)
-   (with-stdout-to
-    bindings.ml
-    (run
-     cargo
-     run
-     --release
-     --offline
-     --package
-     ocaml-rs-smartptr-test
-     --bin
-     main)))))
+    dllocaml_rs_smartptr_test.so))))
 
 ; This library is deliberately empty from OCaml perspective. It's only purpose
 ; is to drag Rust stubs static lib into the final executable linkage by dune.

@@ -1,3 +1,8 @@
+use std::env;
+use std::fs::File;
+use std::io::Write;
+use std::path::Path;
+
 use derive_more::{
     derive::{AsMut, AsRef, Deref, DerefMut},
     From, Into,
@@ -176,4 +181,66 @@ where
     fn from(value: T) -> Self {
         Self(value.into(), PhantomData)
     }
+}
+
+pub struct OcamlGenPlugin {
+    generator: fn(&mut ocaml_gen::Env) -> String,
+    crate_name: &'static str,
+}
+
+impl OcamlGenPlugin {
+    pub const fn new(
+        crate_name: &'static str,
+        generator: fn(&mut ocaml_gen::Env) -> String,
+    ) -> Self {
+        OcamlGenPlugin {
+            crate_name,
+            generator,
+        }
+    }
+
+    fn generate(&self, env: &mut ocaml_gen::Env) -> String {
+        (self.generator)(env)
+    }
+
+    fn crate_name(&self) -> &'static str {
+        self.crate_name
+    }
+}
+
+inventory::collect!(OcamlGenPlugin);
+
+pub fn stubs_gen_main() -> std::io::Result<()> {
+    crate::registry::initialize_plugins();
+    let env = &mut ocaml_gen::Env::new();
+    let args: Vec<String> = env::args().skip(1).collect();
+
+    println!("Detected OcamlGen Plugins:");
+    for plugin in inventory::iter::<OcamlGenPlugin> {
+        let crate_name = plugin.crate_name();
+        if args.is_empty() || args.contains(&crate_name.to_string()) {
+            let w = plugin.generate(env);
+
+            let file_name = format!(
+                "{}.ml",
+                crate_name
+                    .replace('-', "_")
+                    .chars()
+                    .enumerate()
+                    .map(|(i, c)| if i == 0 {
+                        c.to_uppercase().next().unwrap()
+                    } else {
+                        c
+                    })
+                    .collect::<String>()
+            );
+
+            let path = Path::new(&file_name);
+            let mut file = File::create(path)?;
+            file.write_all(w.as_bytes())?;
+            println!(" - Crate: {}, generated: {}", crate_name, file_name);
+        }
+    }
+
+    Ok(())
 }

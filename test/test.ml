@@ -1,4 +1,4 @@
-open Test_lib.Bindings
+open Stubs
 
 let sheep_test () =
   print_endline "\n*** Sheep test";
