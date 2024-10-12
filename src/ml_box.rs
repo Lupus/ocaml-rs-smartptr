@@ -8,7 +8,6 @@ use std::sync::Arc;
 
 use derive_more::derive::Display;
 
-
 /// This wrapper type around `ocaml::root::Root` allows sending
 /// `ocaml::root::Root` to other threads and provides a safe interface for doing
 /// so - the value can be recovered back only in a context where an OCaml
