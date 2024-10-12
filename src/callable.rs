@@ -1,16 +1,31 @@
 use std::hash::Hash;
 
-use highway::{HighwayHash, HighwayHasher};
+use highway::{HighwayHash, HighwayHasher}; // For hashing unique IDs
 use ocaml_gen::{const_random, OCamlDesc};
-use paste::paste;
+use paste::paste; // For generating repetitive code
 
+/// The `Callable` trait represents a function or closure that can be called
+/// with a set of arguments to produce a return value. This trait is designed to
+/// be used with OCaml values and provides methods for calling the function,
+/// describing its arguments, and generating unique IDs for the function
+/// signature.
+///                                                                                                                                                                
+/// # Type Parameters                                                                                                                                              
+/// - `Ret`: The return type of the function, which must implement
+///   `ocaml::FromValue` and `OCamlDesc`.
 pub trait Callable<Ret>
 where
     Ret: ocaml::FromValue + OCamlDesc,
 {
     fn call_with(&self, gc: &ocaml::Runtime, func: ocaml::Value) -> Ret;
+    /// Describes the arguments (i.e. calls OCamlDesc::ocaml_desc) of the
+    /// function. This method should be provided by downstream trait
+    /// implementations.
     fn describe_args(env: &::ocaml_gen::Env, generics: &[&str]) -> Vec<String>;
+    /// Generates unique IDs for the function arguments. This method should be
+    /// provided by downstream trait implementations.
     fn unique_id_args() -> Vec<u128>;
+    /// ocaml_desc generates OCaml type signature for this Callable
     fn ocaml_desc(env: &::ocaml_gen::Env, generics: &[&str]) -> String {
         let args = Self::describe_args(env, generics)
             .into_iter()
@@ -21,16 +36,20 @@ where
     }
 
     fn unique_id() -> u128 {
+        // Static randomized key for Callable
         let key = highway::Key([
             const_random!(u64),
             const_random!(u64),
             const_random!(u64),
             const_random!(u64),
         ]);
+        // Hasher seeded with our key
         let mut hasher = HighwayHasher::new(key);
+        // Hash all Callable arguments
         Self::unique_id_args()
             .iter()
             .for_each(|id| id.hash(&mut hasher));
+        /* Hash return value */
         Ret::unique_id().hash(&mut hasher);
         let result = hasher.finalize128();
         (result[0] as u128) | ((result[1] as u128) << 64)
@@ -43,12 +62,16 @@ where
 
 impl<Ret: ocaml::FromValue + OCamlDesc> Callable<Ret> for () {
     fn call_with(&self, gc: &ocaml::Runtime, func: ocaml::Value) -> Ret {
+        // We use .call1 with a single `()' argument as OCaml does not have a
+        // notion of a function without arguments
         self.process_result(unsafe { func.call1(gc, ()) })
     }
     fn describe_args(env: &ocaml_gen::Env, generics: &[&str]) -> Vec<String> {
+        // Just call OCamlDesc::ocaml_desc on `()' type
         vec![<() as OCamlDesc>::ocaml_desc(env, generics)]
     }
     fn unique_id_args() -> Vec<u128> {
+        // Just call OCamlDesc::unique_id on `()' type
         vec![<() as OCamlDesc>::unique_id()]
     }
 }

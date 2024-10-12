@@ -1,3 +1,75 @@
+#![doc = r#"
+This module provides the `DynBox` smart pointer, which is a wrapper around the
+registry's `DynArc` with `PhantomData` for type safety. `DynBox` allows the user
+to wrap the object in a `Mutex` or shared `RwLock`. By default, using `.into()`
+will create a `Mutex`-protected version (exclusive).
+
+## Key Components
+
+- `DynBox<T>`: A smart pointer for dynamically typed Rust objects referenced
+  from the OCaml side.
+- `RustyObj`: A thin wrapper around a pointer to `DynArc`.
+
+## Usage
+
+### Creating a `DynBox`
+
+You can create a `DynBox` with either a `Mutex` or `RwLock`:
+
+```rust
+let exclusive_box = DynBox::new_exclusive(value); // Mutex-protected
+let shared_box = DynBox::new_shared(value); // RwLock-protected
+```
+
+### Coercion
+
+The `coerce` and `coerce_mut` methods return a handle that holds a lock. Be
+cautious to avoid deadlocks when using these methods.
+
+### OCaml Integration
+
+`DynBox` integrates with the `ocaml_gen` package by providing `OCamlDesc` and
+`OCamlBinding` traits. Polymorphic variants are used to encode supported traits
+of the Rust type that we wrap/bind.
+
+Example:
+
+```ocaml
+module Animal = struct 
+  type nonrec t = [ `Ocaml_rs_smartptr_test_stubs_animal_proxy|`Core_marker_send ] Ocaml_rs_smartptr.Rusty_obj.t
+  external name : t -> string = "animal_name"
+  external noise : t -> string = "animal_noise"
+  external talk : t -> unit = "animal_talk"
+end
+
+
+module Sheep = struct 
+  type nonrec t = [ `Ocaml_rs_smartptr_test_stubs_sheep|`Core_marker_sync|`Core_marker_send|`Ocaml_rs_smartptr_test_stubs_animal_proxy ] Ocaml_rs_smartptr.Rusty_obj.t
+  external create : string -> t = "sheep_create"
+  external is_naked : t -> bool = "sheep_is_naked"
+  external sheer : t -> unit = "sheep_sheer"
+end
+
+
+module Wolf = struct 
+  type nonrec t = [ `Ocaml_rs_smartptr_test_stubs_wolf|`Core_marker_sync|`Core_marker_send|`Ocaml_rs_smartptr_test_stubs_animal_proxy ] Ocaml_rs_smartptr.Rusty_obj.t
+  external create : string -> t = "wolf_create"
+  external set_hungry : t -> bool -> unit = "wolf_set_hungry"
+end
+```
+
+This allows passing `Wolf` or `Sheep` whenever `Animal` is required by using
+coercion operator in OCaml (`:>`).
+
+### RustyObj
+
+`RustyObj` is a thin wrapper around a pointer to `DynArc`. We convert `Arc` into
+a raw pointer to hold that raw pointer in the OCaml heap, ensuring that moving
+of that value by the OCaml GC does not affect any Rust invariants. Reverse
+operation reconstructs the `Arc` from the raw pointer. This ensures that both
+OCaml and Rust always hold valid Arc-baked references to objects they need.
+"#]
+
 use highway::{HighwayHash, HighwayHasher};
 use ocaml_gen::{const_random, OCamlBinding, OCamlDesc};
 use static_assertions::{assert_impl_all, assert_not_impl_all};
@@ -8,6 +80,9 @@ use std::sync::{Arc, Mutex, RwLock};
 
 use crate::{registry, type_name};
 
+/// A smart pointer around the registry's `DynArc` with `PhantomData` for type safety.
+/// Allows the user to wrap the object in a `Mutex` or shared `RwLock`.
+/// By default, using `.into()` will create a `Mutex`-protected version (exclusive).
 pub struct DynBox<T>
 where
     T: Send + ?Sized,
@@ -17,7 +92,15 @@ where
 }
 
 impl<T: 'static + Send> DynBox<T> {
-    // Function to create a DynBox with Mutex
+    /// Creates a `DynBox` with a `Mutex`.
+    ///
+    /// # Parameters
+    ///
+    /// - `value`: The value to be wrapped in the `DynBox`.
+    ///
+    /// # Returns
+    ///
+    /// A new `DynBox` instance with `Mutex` protection.
     pub fn new_exclusive(value: T) -> Self {
         registry::register_type::<T>();
         registry::register_type::<Arc<T>>();
@@ -29,7 +112,15 @@ impl<T: 'static + Send> DynBox<T> {
 }
 
 impl<T: 'static + Sync + Send> DynBox<T> {
-    // Function to create a DynBox with RwLock
+    /// Creates a `DynBox` with a `RwLock`.
+    ///
+    /// # Parameters
+    ///
+    /// - `value`: The value to be wrapped in the `DynBox`.
+    ///
+    /// # Returns
+    ///
+    /// A new `DynBox` instance with `RwLock` protection.
     pub fn new_shared(value: T) -> Self {
         registry::register_type::<T>();
         registry::register_type::<Arc<T>>();
@@ -52,10 +143,22 @@ impl<T: 'static + Send + ?Sized> DynBox<T> {
         }
     }
 
+    /// Coerces the `DynBox` to a handle of the specified type.
+    ///
+    /// # Returns
+    ///
+    /// A handle to the coerced type. Note that this handle holds a lock, so use
+    /// with care to avoid deadlocks.
     pub fn coerce(&self) -> registry::Handle<T> {
         registry::coerce::<T>(self.inner.clone())
     }
 
+    /// Coerces the `DynBox` to a mutable handle of the specified type.
+    ///
+    /// # Returns
+    ///
+    /// A mutable handle to the coerced type. Note that this handle holds a
+    /// lock, so use with care to avoid deadlocks.
     pub fn coerce_mut(&self) -> registry::HandleMut<T> {
         registry::coerce_mut::<T>(self.inner.clone())
     }
@@ -136,8 +239,14 @@ assert_not_impl_all!(std::cell::RefCell<i32>: Sync); // RefCell<i32> is not Sync
 assert_impl_all!(DynBox<std::cell::RefCell<i32>>: Sync, Send); // But DynBox allows RefCell<i32>
 assert_impl_all!(DynBox<i32>: Sync, Send); // And DynBox allows Sync + Send obviously
 
+/// A thin wrapper around a pointer to `DynArc`.
+/// We "leak" `Arc` into a raw pointer to hold that raw pointer in the OCaml
+/// heap, ensuring that moving of that value by the OCaml GC does not affect any
+/// Rust invariants.
 struct RustyObj(*const (dyn Any + Send + Sync));
 
+/// Finalizer is registered with OCaml GC, and ensures that our "leaked" `Arc`
+/// pointer is properly cleaned-up whenever OCaml drops corresponding object
 unsafe extern "C" fn rusty_obj_finalizer(v: ocaml::Raw) {
     let ptr = v.as_pointer::<RustyObj>();
     // Actual type parameter T for DynBox<T> is irrelevant here, dyn Any inside
@@ -165,7 +274,12 @@ where
         let ptr = unsafe { v.raw().as_pointer::<RustyObj>() };
         let orig_dynbox = DynBox::from_raw(ptr.as_ref().0);
         let dynbox = orig_dynbox.clone();
+        // orig_dynbox is owned by OCaml GC at this moment, so we can't drop it
+        // from Rust
         let _ = std::mem::ManuallyDrop::new(orig_dynbox);
+        // dynbox is owned by Rust as a valid Arc clone, so we should be good to
+        // go to use it. Even if OCaml GC drops the original dynbox reference,
+        // we will proceed with our own
         dynbox
     }
 }
@@ -175,7 +289,10 @@ where
     T: Send + ?Sized + 'static,
 {
     fn to_value(&self, rt: &ocaml::Runtime) -> ocaml::Value {
+        // Do a fresh clone of self and turn that into raw pointer
         let ptr = DynBox::into_raw(self.clone());
+        // Convert to RustyObj to ensure that finalizer will be associated with
+        // raw Arc pointer
         let rusty_obj = RustyObj(ptr);
         ocaml::Pointer::from(rusty_obj).to_value(rt)
     }
@@ -185,6 +302,8 @@ impl<T> From<T> for DynBox<T>
 where
     T: Send + 'static,
 {
+    /// Default From implementation is just creating an exclusive DynBox, i.e.
+    /// protected by a Mutex, be careful with deadlocks!
     fn from(value: T) -> Self {
         DynBox::new_exclusive(value)
     }

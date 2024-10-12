@@ -1,6 +1,9 @@
+#![doc = "This module provides additional utilities and extensions for generating OCaml bindings."]
+
 use std::env;
 use std::fs::File;
 use std::io::Write;
+use std::marker::PhantomData;
 use std::path::Path;
 
 use derive_more::{
@@ -12,6 +15,9 @@ use ocaml_gen::{OCamlBinding, OCamlDesc};
 
 use crate::ptr::DynBox;
 
+/// A wrapper around `ocaml::Value` that is printed by `ocaml_gen` as an OCaml
+/// polymorphic type, i.e., `'a` or `'b`, where the `a` or `b` symbol comes from
+/// the const `C: char` of this `PolymorphicValue`.
 #[derive(From, Into, Deref, DerefMut)]
 pub struct PolymorphicValue<const C: char>(ocaml::Value);
 
@@ -37,15 +43,20 @@ unsafe impl<const C: char> ocaml::FromValue for PolymorphicValue<C> {
     }
 }
 
-use std::marker::PhantomData;
-
+/// A trait that is implemented by `P1`, `P2`, etc., used as a link between
+/// concrete `P1`, `P2`, etc., and the `WithTypeParams` wrapper type below.
 pub trait TypeParams {
+    /// Returns a string representation of the type parameters.
     fn params_string() -> String;
+    /// Returns the count of type parameters.
     fn params_count() -> usize;
 }
 
+/// P1 is for a single type parameter 'x where x is const C: char
 pub struct P1<const C: char>;
 
+/// Implementation of `TypeParams` for a single type parameter `'x` where `x` is
+/// `const C: char`.
 impl<const C: char> TypeParams for P1<C> {
     fn params_string() -> String {
         format!("'{}", C)
@@ -55,8 +66,12 @@ impl<const C: char> TypeParams for P1<C> {
     }
 }
 
+/// P2 is for a two type parameters 'x,'y where x is const C1: char and y is
+/// const C2: char
 pub struct P2<const C1: char, const C2: char>;
 
+/// Implementation of `TypeParams` for two type parameters `'x, 'y` where `x` is
+/// `const C1: char` and `y` is `const C2: char`.
 impl<const C1: char, const C2: char> TypeParams for P2<C1, C2> {
     fn params_string() -> String {
         format!("('{}, '{})", C1, C2)
@@ -66,8 +81,12 @@ impl<const C1: char, const C2: char> TypeParams for P2<C1, C2> {
     }
 }
 
+/// Same as P2 but for three type parameters
 pub struct P3<const C1: char, const C2: char, const C3: char>;
 
+/// Implementation of `TypeParams` for three type parameters `'x, 'y, 'z` where
+/// `x` is `const C1: char`, `y` is `const C2: char`, and `z` is `const C3:
+/// char`.
 impl<const C1: char, const C2: char, const C3: char> TypeParams for P3<C1, C2, C3> {
     fn params_string() -> String {
         format!("('{}, '{}, '{})", C1, C2, C3)
@@ -77,6 +96,8 @@ impl<const C1: char, const C2: char, const C3: char> TypeParams for P3<C1, C2, C
     }
 }
 
+/// Thin wrapper around T which adds ability to print T into ocaml_desc as a
+/// type with type parameters
 #[derive(From, Deref, DerefMut, AsRef, AsMut)]
 pub struct WithTypeParams<P: TypeParams, T: ocaml::FromValue + ocaml::ToValue>(
     #[deref]
@@ -90,10 +111,12 @@ pub struct WithTypeParams<P: TypeParams, T: ocaml::FromValue + ocaml::ToValue>(
 impl<P: TypeParams, T: ocaml::FromValue + ocaml::ToValue + OCamlDesc>
     WithTypeParams<P, T>
 {
+    /// Creates a new `WithTypeParams` instance.
     pub fn new(v: T) -> Self {
         Self(v, PhantomData)
     }
 
+    /// Consumes the `WithTypeParams` instance and returns the inner value.
     pub fn into_inner(self) -> T {
         self.0
     }
@@ -132,6 +155,7 @@ fn insert_type_params(
 impl<P: TypeParams, T: ocaml::FromValue + ocaml::ToValue + OCamlBinding + OCamlDesc>
     OCamlBinding for WithTypeParams<P, T>
 {
+    /// Generates the OCaml binding for the type with type parameters.
     fn ocaml_binding(
         env: &mut ::ocaml_gen::Env,
         rename: Option<&'static str>,
@@ -141,10 +165,12 @@ impl<P: TypeParams, T: ocaml::FromValue + ocaml::ToValue + OCamlBinding + OCamlD
 
         if new_type {
             let orig = T::ocaml_binding(env, rename, new_type);
+            // Unfortunately, `OCamlBinding` is not very friendly to composing the
+            // bindings, so we have to parse the generated binding and adjust it.
             insert_type_params(&orig, &P::params_string()).unwrap()
         } else {
             let name = Self::ocaml_desc(env, &[]);
-            let ty_name = rename.expect("bug in ocaml-gen: rename should be Some");
+            let ty_name = rename.expect("bug in `ocaml_gen`: rename should be `Some`");
             env.add_alias(ty_id, ty_name);
 
             format!(
@@ -174,6 +200,7 @@ unsafe impl<P: TypeParams, T: ocaml::FromValue + ocaml::ToValue> ocaml::FromValu
     }
 }
 
+/// This allows `.into()` from right to `TypeParams<P, DynBox<T>>`
 impl<T, P: TypeParams> From<T> for WithTypeParams<P, DynBox<T>>
 where
     T: Send + 'static,
@@ -183,12 +210,17 @@ where
     }
 }
 
+/// Represents a plugin for generating OCaml bindings.
+/// It contains a generator function and the name of the crate.
 pub struct OcamlGenPlugin {
+    /// The function that generates the OCaml bindings.
     generator: fn(&mut ocaml_gen::Env) -> String,
+    /// Name of the crate where this plugin was registered
     crate_name: &'static str,
 }
 
 impl OcamlGenPlugin {
+    /// Creates a new `OcamlGenPlugin` instance.
     pub const fn new(
         crate_name: &'static str,
         generator: fn(&mut ocaml_gen::Env) -> String,
@@ -199,10 +231,12 @@ impl OcamlGenPlugin {
         }
     }
 
+    /// Generates the OCaml bindings using the provided environment.
     fn generate(&self, env: &mut ocaml_gen::Env) -> String {
         (self.generator)(env)
     }
 
+    /// Returns the name of the crate associated with this plugin.
     fn crate_name(&self) -> &'static str {
         self.crate_name
     }
@@ -210,6 +244,9 @@ impl OcamlGenPlugin {
 
 inventory::collect!(OcamlGenPlugin);
 
+/// Main function for stubs generation binaries. It collects `OcamlGenPlugin`s
+/// registered in other libraries and writes one `.ml` file per crate with
+/// generated OCaml bindings.
 pub fn stubs_gen_main() -> std::io::Result<()> {
     crate::registry::initialize_plugins();
     let env = &mut ocaml_gen::Env::new();
