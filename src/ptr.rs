@@ -17,8 +17,9 @@ will create a `Mutex`-protected version (exclusive).
 You can create a `DynBox` with either a `Mutex` or `RwLock`:
 
 ```rust
-let exclusive_box = DynBox::new_exclusive(value); // Mutex-protected
-let shared_box = DynBox::new_shared(value); // RwLock-protected
+use ocaml_rs_smartptr::ptr::DynBox;
+let exclusive_box = DynBox::new_exclusive(42); // Mutex-protected
+let shared_box = DynBox::new_shared("foo"); // RwLock-protected
 ```
 
 ### Coercion
