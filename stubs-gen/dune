@@ -1,7 +1,19 @@
 (rule
  (alias runtest)
- (targets Ocaml_rs_smartptr_test.ml)
- (deps stubs-gen.rs)
+ (targets stubs-gen)
+ (deps
+  stubs-gen.rs
+  (alias %{workspace_root}/rust-staticlib/rust-universe))
  (locks cargo-build)
  (action
-  (run cargo run --offline --package stubs-gen --bin stubs-gen)))
+  (run
+   dune-cargo-build
+   --profile=%{profile}
+   --workspace-root=%{workspace_root}
+   ./Cargo.toml)))
+
+(rule
+ (alias runtest)
+ (targets Ocaml_rs_smartptr_test.ml)
+ (action
+  (run ./stubs-gen)))

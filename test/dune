@@ -1,6 +1,6 @@
 (executable
  (name test)
- (libraries test_lib ocaml_rs_smartptr_test_stubs))
+ (libraries ocaml-rs-smartptr ocaml_rs_smartptr_stubs))
 
 (rule
  (action

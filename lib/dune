@@ -1,4 +1,5 @@
 (library
  (name ocaml_rs_smartptr)
  (public_name ocaml-rs-smartptr)
+ (libraries rust-staticlib-virtual)
  (flags (-linkall)))

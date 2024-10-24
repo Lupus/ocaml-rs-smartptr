@@ -4,11 +4,33 @@
 
 (generate_opam_files true)
 
+(source
+ (github Lupus/ocaml-rs-smartptr))
+
+(license Apache-2.0)
+
+(authors "Konstantin Olkhovskiy <lupus@oxnull.net>")
+
+(maintainers "Konstantin Olkhovskiy <lupus@oxnull.net>")
+
 (package
  (name ocaml-rs-smartptr)
- (maintainers "ocaml-rs-smartptr developers")
  (synopsis "Smart pointer for ocaml-rs")
  (depends
+  (rust-staticlib-gen
+   (and
+    (>= 0.2.0)
+    :with-test))
+  (rust-staticlib-virtual
+   (>= 0.2.0))
+  (dune-cargo-build
+   (and
+    (>= 0.2.0)
+    :build))
+  (rust-async
+   (and
+    (>= 0.1.1)
+    (< 0.2.0)))
   (ocamlformat
    (and
     :with-test

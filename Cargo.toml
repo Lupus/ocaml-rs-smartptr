@@ -30,4 +30,5 @@ members = [
     "macro",
     "test",
     "stubs-gen",
+    "rust-staticlib"
 ]
