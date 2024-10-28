@@ -27,10 +27,6 @@
    (and
     (>= 0.2.0)
     :build))
-  (rust-async
-   (and
-    (>= 0.1.1)
-    (< 0.2.0)))
   (ocamlformat
    (and
     :with-test
