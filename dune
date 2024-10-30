@@ -3,4 +3,4 @@
 (rule
  (alias runtest)
  (action
-  (run cargo test --workspace)))
+  (run dune-cargo-build @test --profile=%{profile} -- --workspace)))
