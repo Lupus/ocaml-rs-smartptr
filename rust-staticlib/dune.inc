@@ -11,6 +11,11 @@
 ; and builds statically and dynamically linked libraries, which consequently
 ; have all the defined symbols which are used by OCaml bindings.
 
+
+; This alias includes generation of all Rust-related bits in staticlib.
+(alias
+  (name populate-rust-staticlib))
+
 ; Create Cargo.toml file in this folder within source directory
 (rule
   (alias populate-rust-staticlib)
