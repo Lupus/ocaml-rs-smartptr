@@ -470,15 +470,15 @@ impl Plugin {
     }
 }
 
-inventory::collect!(Plugin);
+#[linkme::distributed_slice]
+pub static REGISTRY_PLUGINS: [Plugin] = [..];
 
 static INIT: Once = Once::new();
 
 /// Initializes all registered plugins. This function is called once.
 pub fn initialize_plugins() {
-    // Initialize all registered plugins.
     INIT.call_once(|| {
-        for plugin in inventory::iter::<Plugin> {
+        for plugin in REGISTRY_PLUGINS.iter() {
             plugin.initialize();
         }
     });

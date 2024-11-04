@@ -242,7 +242,8 @@ impl OcamlGenPlugin {
     }
 }
 
-inventory::collect!(OcamlGenPlugin);
+#[linkme::distributed_slice]
+pub static OCAML_GEN_PLUGINS: [OcamlGenPlugin] = [..];
 
 /// Main function for stubs generation binaries. It collects `OcamlGenPlugin`s
 /// registered in other libraries and writes one `.ml` file per crate with
@@ -253,7 +254,7 @@ pub fn stubs_gen_main() -> std::io::Result<()> {
     let args: Vec<String> = env::args().skip(1).collect();
 
     println!("Detected OcamlGen Plugins:");
-    for plugin in inventory::iter::<OcamlGenPlugin> {
+    for plugin in OCAML_GEN_PLUGINS.iter() {
         let crate_name = plugin.crate_name();
         if args.is_empty() || args.contains(&crate_name.to_string()) {
             let w = plugin.generate(env);

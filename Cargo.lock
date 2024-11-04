@@ -349,12 +349,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "inventory"
-version = "0.3.15"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f958d3d68f4167080a18141e10381e7634563984a537f2a49a30fd8e53ac5767"
-
-[[package]]
 name = "itoa"
 version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -365,6 +359,26 @@ name = "libc"
 version = "0.2.158"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d8adc4bb1803a324070e64a98ae98f38934d91957a99cfb3a43dcbc01bc56439"
+
+[[package]]
+name = "linkme"
+version = "0.3.29"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "70fe496a7af8c406f877635cbf3cd6a9fac9d6f443f58691cd8afe6ce0971af4"
+dependencies = [
+ "linkme-impl",
+]
+
+[[package]]
+name = "linkme-impl"
+version = "0.3.29"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b01f197a15988fb5b2ec0a5a9800c97e70771499c456ad757d63b3c5e9b96e75"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.77",
+]
 
 [[package]]
 name = "lock_api"
@@ -493,7 +507,7 @@ version = "0.1.0"
 dependencies = [
  "derive_more 1.0.0",
  "highway",
- "inventory",
+ "linkme",
  "ocaml 1.0.1",
  "ocaml-gen",
  "ocaml-rs-smartptr-macro",
@@ -524,6 +538,7 @@ dependencies = [
  "cargo_metadata",
  "codegen",
  "derive_more 0.99.18",
+ "linkme",
  "ocaml 1.0.1",
  "ocaml-gen",
  "ocaml-rs-smartptr",

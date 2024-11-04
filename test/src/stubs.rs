@@ -129,8 +129,8 @@ pub fn call_cb(
     res
 }
 
-// Register types & traits
-register_rtti! {
+#[linkme::distributed_slice(ocaml_rs_smartptr::registry::REGISTRY_PLUGINS)]
+static REGISTRY_PLUGIN: ocaml_rs_smartptr::registry::Plugin = register_rtti!({
     register_trait!(
         {
             ty: crate::stubs::AnimalProxy,
@@ -151,31 +151,33 @@ register_rtti! {
             object_safe_traits: [crate::stubs::AnimalProxy],
         }
     );
-}
+});
 
 // OCaml bindings generation
-ocaml_gen_bindings! {
-    decl_module!("Animal", {
-        decl_type!(DynBox<Animal> => "t");
-        decl_func!(animal_name => "name");
-        decl_func!(animal_noise => "noise");
-        decl_func!(animal_talk => "talk");
-    });
+#[linkme::distributed_slice(ocaml_rs_smartptr::ocaml_gen_extras::OCAML_GEN_PLUGINS)]
+static OCAML_GEN_PLUGIN: ocaml_rs_smartptr::ocaml_gen_extras::OcamlGenPlugin =
+    ocaml_gen_bindings!({
+        decl_module!("Animal", {
+            decl_type!(DynBox<Animal> => "t");
+            decl_func!(animal_name => "name");
+            decl_func!(animal_noise => "noise");
+            decl_func!(animal_talk => "talk");
+        });
 
-    decl_module!("Sheep", {
-        decl_type!(DynBox<Sheep> => "t");
-        decl_func!(sheep_create => "create");
-        decl_func!(sheep_is_naked => "is_naked");
-        decl_func!(sheep_sheer => "sheer");
-    });
+        decl_module!("Sheep", {
+            decl_type!(DynBox<Sheep> => "t");
+            decl_func!(sheep_create => "create");
+            decl_func!(sheep_is_naked => "is_naked");
+            decl_func!(sheep_sheer => "sheer");
+        });
 
-    decl_module!("Wolf", {
-        decl_type!(DynBox<Wolf> => "t");
-        decl_func!(wolf_create => "create");
-        decl_func!(wolf_set_hungry => "set_hungry");
-    });
+        decl_module!("Wolf", {
+            decl_type!(DynBox<Wolf> => "t");
+            decl_func!(wolf_create => "create");
+            decl_func!(wolf_set_hungry => "set_hungry");
+        });
 
-    decl_module!("Test_callback", {
-        decl_func!(call_cb => "call_cb");
+        decl_module!("Test_callback", {
+            decl_func!(call_cb => "call_cb");
+        });
     });
-}
