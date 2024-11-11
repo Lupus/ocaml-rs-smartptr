@@ -32,3 +32,7 @@ members = [
     "stubs-gen",
     "rust-staticlib"
 ]
+
+# See https://github.com/dtolnay/linkme/issues/61
+[profile.dev]
+lto = "thin"
