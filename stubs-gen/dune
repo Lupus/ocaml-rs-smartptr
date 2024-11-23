@@ -16,4 +16,6 @@
  (alias runtest)
  (targets Ocaml_rs_smartptr_test.ml)
  (action
-  (run ./stubs-gen)))
+  (progn
+   (run ./stubs-gen)
+   (run ocamlformat -i %{targets}))))

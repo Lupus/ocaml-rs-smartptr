@@ -177,8 +177,10 @@ impl<T: 'static + Send + ?Sized> Clone for DynBox<T> {
 impl<T: ?Sized + Send + 'static> OCamlDesc for DynBox<T> {
     fn ocaml_desc(env: &::ocaml_gen::Env, _generics: &[&str]) -> String {
         let type_id = <Self as OCamlDesc>::unique_id();
-        env.get_type(type_id, type_name::get_type_name::<T>().as_str())
-            .0
+        let typ = env
+            .get_type(type_id, type_name::get_type_name::<T>().as_str())
+            .0;
+        format!("_ {}'", typ)
     }
 
     fn unique_id() -> u128 {
@@ -221,16 +223,14 @@ impl<T: ?Sized + Send + 'static> OCamlBinding for DynBox<T> {
             .join("|");
 
         if new_type {
+            let name = name.split_whitespace().last().expect("no last element :shrug:").to_owned();
+            let name = name.strip_suffix("'").expect("dynbox type name does not end with `'`!");
             format!(
-                "type nonrec {} = [ {} ] Ocaml_rs_smartptr.Rusty_obj.t",
-                name, variants
+                "type tags = [{}] type 'a {}' = ([> tags ] as 'a) Ocaml_rs_smartptr.Rusty_obj.t type {} = tags {}'",
+                variants, name, name, name
             )
         } else {
-            // add the alias
-            let ty_name = rename.expect("bug in ocaml-gen: rename should be Some");
-            env.add_alias(ty_id, ty_name);
-
-            format!("type nonrec {} = {}", ty_name, name)
+            unimplemented!("aliasing of DynBox bindings is not implemented")
         }
     }
 }
