@@ -19,13 +19,13 @@
  (depends
   (rust-staticlib-gen
    (and
-    (>= 0.2.1)
+    (>= 0.2.2)
     :with-test))
   (rust-staticlib-virtual
-   (>= 0.2.1))
+   (>= 0.2.2))
   (dune-cargo-build
    (and
-    (>= 0.2.1)
+    (>= 0.2.2)
     :build))
   (ocamlformat
    (and

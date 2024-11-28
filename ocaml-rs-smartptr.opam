@@ -8,9 +8,9 @@ homepage: "https://github.com/Lupus/ocaml-rs-smartptr"
 bug-reports: "https://github.com/Lupus/ocaml-rs-smartptr/issues"
 depends: [
   "dune" {>= "3.7"}
-  "rust-staticlib-gen" {>= "0.2.1" & with-test}
-  "rust-staticlib-virtual" {>= "0.2.1"}
-  "dune-cargo-build" {>= "0.2.1" & build}
+  "rust-staticlib-gen" {>= "0.2.2" & with-test}
+  "rust-staticlib-virtual" {>= "0.2.2"}
+  "dune-cargo-build" {>= "0.2.2" & build}
   "ocamlformat" {with-test & >= "0.26.2" & < "0.27.0"}
   "odoc" {with-doc}
 ]
@@ -34,8 +34,3 @@ dev-repo: "git+https://github.com/Lupus/ocaml-rs-smartptr.git"
 # containing such extension fields and combine a full set of Rust crate
 # dependencies for a given opam file.
 x-rust-stubs-crate: "ocaml-rs-smartptr"
-pin-depends: [
-  ["rust-staticlib-gen.0.2.1" "git+https://github.com/Lupus/rust-staticlib-gen.git#0.2.2"]
-  ["rust-staticlib-virtual.0.2.1" "git+https://github.com/Lupus/rust-staticlib-gen.git#0.2.2"]
-  ["dune-cargo-build.0.2.1" "git+https://github.com/Lupus/rust-staticlib-gen.git#0.2.2"]
-]
