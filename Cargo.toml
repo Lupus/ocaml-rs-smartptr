@@ -9,7 +9,7 @@ path = "src/lib.rs"
 
 [dependencies]
 ocaml-rs-smartptr-macro = { path = "macro", version = "*" }
-ocaml = "1.0.1"
+ocaml = "1.1.0"
 owning_ref = "0.4.1"
 stable_deref_trait = "1.2"
 static_assertions = "1.1.0"
@@ -32,6 +32,9 @@ members = [
     "stubs-gen",
     "rust-staticlib"
 ]
+
+[patch.crates-io]
+ocaml-gen = { git = "https://github.com/Lupus/ocaml-gen.git" }
 
 # See https://github.com/dtolnay/linkme/issues/61
 [profile.dev]
