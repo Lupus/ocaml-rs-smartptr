@@ -223,8 +223,14 @@ impl<T: ?Sized + Send + 'static> OCamlBinding for DynBox<T> {
             .join("|");
 
         if new_type {
-            let name = name.split_whitespace().last().expect("no last element :shrug:").to_owned();
-            let name = name.strip_suffix("'").expect("dynbox type name does not end with `'`!");
+            let name = name
+                .split_whitespace()
+                .last()
+                .expect("no last element :shrug:")
+                .to_owned();
+            let name = name
+                .strip_suffix("'")
+                .expect("dynbox type name does not end with `'`!");
             format!(
                 "type tags = [{}] type 'a {}' = ([> tags ] as 'a) Ocaml_rs_smartptr.Rusty_obj.t type {} = tags {}'",
                 variants, name, name, name

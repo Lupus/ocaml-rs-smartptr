@@ -26,7 +26,7 @@ let sheep_test () =
   Animal.talk sheep;
   Sheep.sheer sheep;
   (* inclusion of Animal into Sheep allows to call Animal methods on Sheep right
-  from Sheep module for convenience *)
+     from Sheep module for convenience *)
   Sheep.talk sheep
 ;;
 
