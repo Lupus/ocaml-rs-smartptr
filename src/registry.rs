@@ -32,7 +32,7 @@ enum LockReadGuard<'a, T> {
     RwLockRead(RwLockReadGuard<'a, T>),
 }
 
-impl<'a, T> Deref for LockReadGuard<'a, T> {
+impl<T> Deref for LockReadGuard<'_, T> {
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
@@ -45,7 +45,7 @@ impl<'a, T> Deref for LockReadGuard<'a, T> {
 
 /// Both MutexGuard and RwLockReadGuard are StableDeref, so enum of those two is
 /// also StableDeref
-unsafe impl<'a, T> stable_deref_trait::StableDeref for LockReadGuard<'a, T> {}
+unsafe impl<T> stable_deref_trait::StableDeref for LockReadGuard<'_, T> {}
 
 /// An enum representing a write guard for either a `Mutex` or `RwLock`.
 /// This allows for a unified interface for write access to the underlying data.
@@ -54,7 +54,7 @@ enum LockWriteGuard<'a, T> {
     RwLockWrite(RwLockWriteGuard<'a, T>),
 }
 
-impl<'a, T> Deref for LockWriteGuard<'a, T> {
+impl<T> Deref for LockWriteGuard<'_, T> {
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
@@ -65,7 +65,7 @@ impl<'a, T> Deref for LockWriteGuard<'a, T> {
     }
 }
 
-impl<'a, T> DerefMut for LockWriteGuard<'a, T> {
+impl<T> DerefMut for LockWriteGuard<'_, T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         match self {
             LockWriteGuard::Mutex(guard) => &mut *guard,
@@ -76,7 +76,7 @@ impl<'a, T> DerefMut for LockWriteGuard<'a, T> {
 
 /// Both MutexGuard and RwLockWriteGuard are StableDeref, so enum of those two
 /// is also StableDeref
-unsafe impl<'a, T> stable_deref_trait::StableDeref for LockWriteGuard<'a, T> {}
+unsafe impl<T> stable_deref_trait::StableDeref for LockWriteGuard<'_, T> {}
 
 /// A type alias for an `Arc` containing a dynamically typed value that is both
 /// `Sync` and `Send`. This is used to store values in the registry.
