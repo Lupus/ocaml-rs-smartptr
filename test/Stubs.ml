@@ -10,6 +10,7 @@ module Animal = struct
   external name : _ t' -> string = "animal_name"
   external noise : _ t' -> string = "animal_noise"
   external talk : _ t' -> unit = "animal_talk"
+  external create_random : string -> _ t' = "animal_create_random"
 end
 
 module Sheep = struct

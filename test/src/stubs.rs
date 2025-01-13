@@ -111,6 +111,16 @@ pub fn wolf_set_hungry(wolf: DynBox<Wolf>, hungry: bool) {
     wolf.set_hungry(hungry);
 }
 
+// Boxed trait bindings
+
+#[ocaml_gen::func]
+#[ocaml::func]
+pub fn animal_create_random(name: String) -> DynBox<Animal> {
+    let sheep: Sheep = animals::Animal::new(name);
+    let animal: Box<Animal> = Box::new(sheep);
+    DynBox::new_exclusive_boxed(animal)
+}
+
 // OCamlFunc bindings
 
 #[ocaml_gen::func]
@@ -160,6 +170,7 @@ ocaml_gen_bindings! {
         decl_func!(animal_name => "name");
         decl_func!(animal_noise => "noise");
         decl_func!(animal_talk => "talk");
+        decl_func!(animal_create_random => "create_random");
     });
 
     decl_module!("Sheep", {

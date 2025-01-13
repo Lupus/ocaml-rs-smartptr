@@ -112,6 +112,27 @@ impl<T: 'static + Send> DynBox<T> {
     }
 }
 
+impl<T: 'static + Send + ?Sized> DynBox<T> {
+    /// Creates a `DynBox` with a `Mutex` out of a Box'ed T. Useful if T is
+    /// unsized, e.g. a `dyn Trait`.
+    ///
+    /// # Parameters
+    ///
+    /// - `value`: The value (inside a Box) to be wrapped in the `DynBox`.
+    ///
+    /// # Returns
+    ///
+    /// A new `DynBox` instance with `Mutex` protection.
+    pub fn new_exclusive_boxed(value: Box<T>) -> Self {
+        registry::register_type::<Box<T>>();
+        registry::register_type::<Arc<Box<T>>>();
+        DynBox {
+            inner: Arc::new(Mutex::new(value)),
+            _phantom: PhantomData,
+        }
+    }
+}
+
 impl<T: 'static + Sync + Send> DynBox<T> {
     /// Creates a `DynBox` with a `RwLock`.
     ///
@@ -125,6 +146,27 @@ impl<T: 'static + Sync + Send> DynBox<T> {
     pub fn new_shared(value: T) -> Self {
         registry::register_type::<T>();
         registry::register_type::<Arc<T>>();
+        DynBox {
+            inner: Arc::new(RwLock::new(value)),
+            _phantom: PhantomData,
+        }
+    }
+}
+
+impl<T: 'static + Sync + Send + ?Sized> DynBox<T> {
+    /// Creates a `DynBox` with a `RwLock` out of a Box'ed T. Useful if T is
+    /// unsized, e.g. a `dyn Trait`.
+    ///
+    /// # Parameters
+    ///
+    /// - `value`: The value (inside a Box) to be wrapped in the `DynBox`.
+    ///
+    /// # Returns
+    ///
+    /// A new `DynBox` instance with `RwLock` protection.
+    pub fn new_shared_boxed(value: Box<T>) -> Self {
+        registry::register_type::<Box<T>>();
+        registry::register_type::<Arc<Box<T>>>();
         DynBox {
             inner: Arc::new(RwLock::new(value)),
             _phantom: PhantomData,

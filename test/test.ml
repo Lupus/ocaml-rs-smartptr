@@ -45,9 +45,16 @@ let wolf_test () =
   Animal.talk animal
 ;;
 
+let random_animal_test () =
+  print_endline "\n*** Random animal test";
+  let animal = Animal.create_random "anonymous" in
+  Animal.talk animal
+;;
+
 let main () =
   sheep_test ();
-  wolf_test ()
+  wolf_test ();
+  random_animal_test ()
 ;;
 
 let () = main ()
