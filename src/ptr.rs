@@ -256,6 +256,15 @@ impl<T: ?Sized + Send + 'static> OCamlBinding for DynBox<T> {
         }
 
         let name = Self::ocaml_desc(env, &[]);
+        let name = name
+            .split_whitespace()
+            .last()
+            .expect("no last element :shrug:")
+            .to_owned();
+        let name = name
+            .strip_suffix("'")
+            .expect("dynbox type name does not end with `'`!");
+
         let names = registry::get_type_info::<T>().implementations;
         let variants = names
             .iter()
@@ -265,20 +274,18 @@ impl<T: ?Sized + Send + 'static> OCamlBinding for DynBox<T> {
             .join("|");
 
         if new_type {
-            let name = name
-                .split_whitespace()
-                .last()
-                .expect("no last element :shrug:")
-                .to_owned();
-            let name = name
-                .strip_suffix("'")
-                .expect("dynbox type name does not end with `'`!");
             format!(
                 "type tags = [{}] type 'a {}' = ([> tags ] as 'a) Ocaml_rs_smartptr.Rusty_obj.t type {} = tags {}'",
                 variants, name, name, name
             )
         } else {
-            unimplemented!("aliasing of DynBox bindings is not implemented")
+            let ty_name = rename.expect("bug in ocaml-gen: rename should be Some");
+            env.add_alias(ty_id, ty_name);
+
+            format!(
+                "type 'a {}' = 'a {}' type {} = {}",
+                ty_name, name, ty_name, name
+            )
         }
     }
 }

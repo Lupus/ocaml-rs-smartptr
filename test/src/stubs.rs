@@ -189,4 +189,9 @@ ocaml_gen_bindings! {
     decl_module!("Test_callback", {
         decl_func!(call_cb => "call_cb");
     });
+
+    decl_module!("Animal_alias", {
+        decl_type_alias!("animal" => DynBox<Animal>);
+        decl_func!(animal_create_random => "create_random_animal");
+    });
 }

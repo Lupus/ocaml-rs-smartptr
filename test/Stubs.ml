@@ -47,3 +47,10 @@ end
 module Test_callback = struct
   external call_cb : _ Wolf.t' -> (_ Wolf.t' -> _ Animal.t') -> _ Animal.t' = "call_cb"
 end
+
+module Animal_alias = struct
+  type 'a animal' = 'a Animal.t'
+  type animal = Animal.t
+
+  external create_random_animal : string -> _ animal' = "animal_create_random"
+end
