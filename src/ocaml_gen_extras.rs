@@ -210,6 +210,95 @@ where
     }
 }
 
+#[macro_export]
+macro_rules! ocaml_export {
+    ($inner_type:ty, $new_type:ident, $ocaml_path:expr) => {
+        #[allow(dead_code)]
+        pub struct $new_type($inner_type);
+
+        impl ::std::ops::Deref for $new_type {
+            type Target = $inner_type;
+
+            fn deref(&self) -> &Self::Target {
+                &self.0
+            }
+        }
+
+        impl ::std::ops::DerefMut for $new_type {
+            fn deref_mut(&mut self) -> &mut Self::Target {
+                &mut self.0
+            }
+        }
+
+        impl ::std::convert::From<$inner_type> for $new_type {
+            fn from(inner: $inner_type) -> Self {
+                Self(inner)
+            }
+        }
+
+        unsafe impl ocaml::ToValue for $new_type {
+            fn to_value(&self, rt: &ocaml::Runtime) -> ocaml::Value {
+                self.0.to_value(rt)
+            }
+        }
+
+        unsafe impl ocaml::FromValue for $new_type {
+            fn from_value(v: ocaml::Value) -> Self {
+                $new_type::from_value(v)
+            }
+        }
+
+        impl ::ocaml_gen::OCamlDesc for $new_type {
+            fn ocaml_desc(env: &::ocaml_gen::Env, generics: &[&str]) -> String {
+                // We clone an env
+                let mut env = env.clone();
+                // Ask our inner type to produce ocaml binding for a new type in
+                // the cloned env under desired name, we ignore the actial
+                // binding code returned by `ocaml_binding` as we don't need it
+                <$inner_type as ::ocaml_gen::OCamlBinding>::ocaml_binding(
+                    &mut env,
+                    Some($ocaml_path),
+                    true,
+                );
+                // Call ocaml_desc for our inner type in this new env with
+                // defined binding
+                let res =
+                    <$inner_type as ::ocaml_gen::OCamlDesc>::ocaml_desc(&env, generics);
+                // Discard the env to avoid panics on drop as we're still nested
+                // in some module etc
+                env.discard();
+                // Return the ocaml_desc produced in fake env
+                res
+            }
+
+            fn unique_id() -> u128 {
+                <$inner_type as ::ocaml_gen::OCamlDesc>::unique_id()
+            }
+        }
+
+        impl ::ocaml_gen::OCamlBinding for $new_type {
+            fn ocaml_binding(
+                env: &mut ::ocaml_gen::Env,
+                rename: Option<&'static str>,
+                new_type: bool,
+            ) -> String {
+                let ty_id = <Self as ::ocaml_gen::OCamlDesc>::unique_id();
+                let name = <Self as ::ocaml_gen::OCamlDesc>::ocaml_desc(env, &[]);
+
+                if new_type {
+                    panic!("can't declare a new type for {}, as it's exported from other lib, \
+                        you can declare an alias for it if you really want to", stringify!($new_type));
+                } else {
+                    let ty_name =
+                        rename.expect("bug in ocaml-gen: rename should be Some");
+                    env.add_alias(ty_id, ty_name);
+                    format!("type nonrec {} = {}", ty_name, name)
+                }
+            }
+        }
+    };
+}
+
 /// Represents a plugin for generating OCaml bindings.
 /// It contains a generator function and the name of the crate.
 pub struct OcamlGenPlugin {

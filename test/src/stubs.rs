@@ -139,6 +139,38 @@ pub fn call_cb(
     res
 }
 
+// ocaml_export!  bindings
+
+#[derive(ocaml::ToValue, ocaml::FromValue, ocaml_gen::CustomType)]
+pub struct Barn {
+    size: u32,
+}
+
+type DynBoxWithAnimal = DynBox<dyn AnimalProxy + Send + Sync>;
+
+pub mod exports {
+    ocaml_rs_smartptr::ocaml_export!(crate::stubs::Barn, Barn, "Some_other_lib.Barn.t");
+    ocaml_rs_smartptr::ocaml_export!(
+        crate::stubs::DynBoxWithAnimal,
+        DynBoxWithAnimal,
+        "Some_other_lib.Animal.t"
+    );
+}
+
+#[ocaml_gen::func]
+#[ocaml::func]
+pub fn barn_create(size: u32) -> exports::Barn {
+    Barn { size }.into()
+}
+
+#[ocaml_gen::func]
+#[ocaml::func]
+pub fn dynbox_with_animal_create(name: String) -> exports::DynBoxWithAnimal {
+    let wolf: Wolf = animals::Animal::new(name);
+    let animal: Box<dyn AnimalProxy + Send + Sync> = Box::new(wolf);
+    DynBox::new_exclusive_boxed(animal).into()
+}
+
 // Register types & traits
 register_rtti! {
     register_trait!(
@@ -193,5 +225,12 @@ ocaml_gen_bindings! {
     decl_module!("Animal_alias", {
         decl_type_alias!("animal" => DynBox<Animal>);
         decl_func!(animal_create_random => "create_random_animal");
+    });
+
+    decl_module!("Export_import", {
+        decl_func!(barn_create => "barn_create");
+        decl_type_alias!("barn" => exports::Barn);
+        decl_func!(barn_create => "barn_create_with_alias");
+        decl_func!(dynbox_with_animal_create => "dynbox_with_animal_create");
     });
 }

@@ -54,3 +54,16 @@ module Animal_alias = struct
 
   external create_random_animal : string -> _ animal' = "animal_create_random"
 end
+
+module Export_import = struct
+  external barn_create : int32 -> Some_other_lib.Barn.t = "barn_create"
+
+  type nonrec barn = Some_other_lib.Barn.t
+
+  external barn_create_with_alias : int32 -> barn = "barn_create"
+
+  external dynbox_with_animal_create
+    :  string
+    -> _ Some_other_lib.Animal.t'
+    = "dynbox_with_animal_create"
+end
