@@ -338,14 +338,22 @@ inventory::collect!(OcamlGenPlugin);
 /// generated OCaml bindings.
 pub fn stubs_gen_main() -> std::io::Result<()> {
     crate::registry::initialize_plugins();
-    let env = &mut ocaml_gen::Env::new();
     let args: Vec<String> = env::args().skip(1).collect();
 
     println!("Detected OcamlGen Plugins:");
     for plugin in inventory::iter::<OcamlGenPlugin> {
         let crate_name = plugin.crate_name();
         if args.is_empty() || args.contains(&crate_name.to_string()) {
-            let w = plugin.generate(env);
+            let w = std::panic::catch_unwind(|| {
+                let env = &mut ocaml_gen::Env::new();
+                plugin.generate(env)
+            })
+            .map_err(|err| {
+                std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    format!("plugin from crate `{}' failed: {:?}", crate_name, err),
+                )
+            })?;
 
             let file_name = format!(
                 "{}.ml",
