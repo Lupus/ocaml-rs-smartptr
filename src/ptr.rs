@@ -216,6 +216,16 @@ impl<T: 'static + Send + ?Sized> Clone for DynBox<T> {
     }
 }
 
+impl<E> From<E> for DynBox<dyn std::error::Error + Send>
+where
+    E: std::error::Error + Send + 'static,
+{
+    fn from(err: E) -> Self {
+        let boxed_err: Box<dyn std::error::Error + Send> = Box::new(err);
+        DynBox::new_exclusive_boxed(boxed_err)
+    }
+}
+
 impl<T: ?Sized + Send + 'static> OCamlDesc for DynBox<T> {
     fn ocaml_desc(env: &::ocaml_gen::Env, _generics: &[&str]) -> String {
         let type_id = <Self as OCamlDesc>::unique_id();
@@ -369,7 +379,7 @@ where
 mod tests {
     use super::*;
     use crate as ocaml_rs_smartptr; // For proc macro use below to work
-    use crate::register_type;
+    use crate::{register_trait, register_type};
     use serial_test::serial;
 
     #[derive(Debug)]
@@ -403,6 +413,25 @@ mod tests {
         };
         let orig_error_msg = error.to_string();
         let error = DynBox::new_shared(error);
+        // The following line mimics the dynbox being sent to OCaml and received
+        // back as another type
+        let error = DynBox::from_raw(DynBox::into_raw(error));
+        let wrapped_error_msg = get_error_message(error);
+        assert_eq!(wrapped_error_msg, orig_error_msg);
+    }
+
+    #[test]
+    #[serial(registry)]
+    fn test_error_boxing() {
+        register_trait!({
+            ty: std::error::Error,
+            marker_traits: [core::marker::Send],
+        });
+        let error = MyError {
+            msg: String::from("bla-bla-bla"),
+        };
+        let orig_error_msg = error.to_string();
+        let error: DynBox<dyn std::error::Error + Send> = error.into();
         // The following line mimics the dynbox being sent to OCaml and received
         // back as another type
         let error = DynBox::from_raw(DynBox::into_raw(error));
