@@ -409,4 +409,28 @@ mod tests {
         let wrapped_error_msg = get_error_message(error);
         assert_eq!(wrapped_error_msg, orig_error_msg);
     }
+
+    // Unfortunately supertrait support does not work yet with stable Rust :(
+    // rust: cannot cast `dyn Error` to `dyn Display`, trait upcasting coercion is experimental
+    // see issue #65991 <https://github.com/rust-lang/rust/issues/65991> for more information
+    // required when coercing `&dyn Error` into `&dyn Display`
+    // #[test]
+    // #[serial(registry)]
+    // fn test_dyn_bla() {
+    //     register_trait!({
+    //         ty: crate::ptr::tests::ErrorCombined,
+    //         marker_traits: [core::marker::Sync, core::marker::Send],
+    //         super_traits: [std::fmt::Display, core::fmt::Debug],
+    //     });
+    //     let error = MyError {
+    //         msg: String::from("bla-bla-bla"),
+    //     };
+    //     let orig_error_msg = error.to_string();
+    //     let error = DynBox::new_shared(error);
+    //     // The following line mimics the dynbox being sent to OCaml and received
+    //     // back as another type
+    //     let error = DynBox::from_raw(DynBox::into_raw(error));
+    //     let wrapped_error_msg = get_error_message(error);
+    //     assert_eq!(wrapped_error_msg, orig_error_msg);
+    // }
 }

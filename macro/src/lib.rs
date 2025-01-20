@@ -229,7 +229,11 @@ impl Parse for TypeRegisterInput {
 
         let ty = parse_named_field(&content, "ty")?;
         let marker_traits = parse_named_list(&content, "marker_traits")?;
-        let object_safe_traits = parse_named_list(&content, "object_safe_traits")?;
+        let object_safe_traits = if content.peek(syn::Ident) && content.peek2(Token![:]) {
+            parse_named_list(&content, "object_safe_traits")?
+        } else {
+            vec![]
+        };
         let conversions = vec![];
 
         Ok(TypeRegisterInput {
@@ -276,6 +280,7 @@ fn parse_named_list<T: Parse>(input: ParseStream, name: &str) -> syn::Result<Vec
 struct TraitRegisterInput {
     ty: TypePath,
     marker_traits: Vec<Path>,
+    super_traits: Vec<Path>,
 }
 
 impl Parse for TraitRegisterInput {
@@ -285,8 +290,17 @@ impl Parse for TraitRegisterInput {
 
         let ty = parse_named_field(&content, "ty")?;
         let marker_traits = parse_named_list(&content, "marker_traits")?;
+        let super_traits = if content.peek(syn::Ident) && content.peek2(Token![:]) {
+            parse_named_list(&content, "super_traits")?
+        } else {
+            vec![]
+        };
 
-        Ok(TraitRegisterInput { ty, marker_traits })
+        Ok(TraitRegisterInput {
+            ty,
+            marker_traits,
+            super_traits,
+        })
     }
 }
 
@@ -294,6 +308,7 @@ impl Parse for TraitRegisterInput {
 fn generate_trait_registration(
     ty: &TypePath,
     marker_traits: &[Path],
+    super_traits: &[Path],
     current_crate_name: &str,
 ) -> proc_macro2::TokenStream {
     let mut ty = ty.clone();
@@ -303,36 +318,6 @@ fn generate_trait_registration(
         ocaml_rs_smartptr::registry::register_type::<dyn #ty>();
     };
     let fq_name = stringify_path(&resolve_path(&ty.path, current_crate_name));
-    let mut implementations = vec![];
-    implementations.push(fq_name.clone());
-    implementations.append(
-        &mut marker_traits
-            .iter()
-            .map(|p| stringify_path(&resolve_path(p, current_crate_name)))
-            .collect::<Vec<_>>(),
-    );
-    // Convert each LitStr into a TokenStream that represents a string literal in Rust
-    let implementations: Vec<proc_macro2::TokenStream> = implementations
-        .into_iter()
-        .map(|value| {
-            quote! { #value }
-        })
-        .collect();
-
-    // Create the vector literal
-    let implementations = quote! {
-        vec![#(#implementations),*]
-    };
-    output.extend(quote! {
-        ocaml_rs_smartptr::registry::register_type_info::<dyn #ty>(#fq_name, #implementations);
-    });
-
-    output.extend(quote! {
-        ocaml_rs_smartptr::registry::register::<Box<dyn #ty>, dyn #ty>(
-            |x: &Box<dyn #ty>| x.as_ref(),
-            |x: &mut Box<dyn #ty>| x.as_mut()
-        );
-    });
 
     let combinations = marker_trait_combinations(&marker_traits);
 
@@ -345,6 +330,12 @@ fn generate_trait_registration(
         implementations.push(fq_name.clone());
         implementations.append(
             &mut combination_paths
+                .iter()
+                .map(|p| stringify_path(&resolve_path(p, current_crate_name)))
+                .collect::<Vec<_>>(),
+        );
+        implementations.append(
+            &mut super_traits
                 .iter()
                 .map(|p| stringify_path(&resolve_path(p, current_crate_name)))
                 .collect::<Vec<_>>(),
@@ -371,6 +362,15 @@ fn generate_trait_registration(
                 |x: &mut Box<dyn #full_trait>| x.as_mut()
             );
         });
+        for super_trait in super_traits {
+            // Generate code for trait -> super_trait
+            output.extend(quote! {
+                ocaml_rs_smartptr::registry::register::<Box<dyn #full_trait>, dyn #super_trait>(
+                    |x: &Box<dyn #full_trait>| x.as_ref(),
+                    |x: &mut Box<dyn #full_trait>| x.as_mut()
+                );
+            });
+        }
     }
 
     output
@@ -384,6 +384,7 @@ pub fn register_trait(input: TokenStream) -> TokenStream {
     let output = generate_trait_registration(
         &input.ty,
         &input.marker_traits,
+        &input.super_traits,
         &std::env::var("CARGO_CRATE_NAME").unwrap(),
     );
     output.into()
@@ -657,6 +658,180 @@ mod generation_tests {
                     x
                         as &mut (dyn ::std::error::Error + ::core::marker::Send + ::core::marker::Sync)
                 },
+            );
+        };
+
+        // Use prettyplease to format the output and expected output
+        let output = pretty_print_item(output_tokens);
+        let expected_output = pretty_print_item(expected_output);
+
+        // Assert that the output matches the expected output
+        assert_eq!(output, expected_output);
+    }
+
+    #[test]
+    fn test_register_trait_macro_global() {
+        // Define the input to the core function
+        let ty: TypePath = parse_quote! { std::error::Error };
+        let marker_traits: Vec<Path> = vec![
+            parse_quote! { core::marker::Send },
+            parse_quote! { core::marker::Sync },
+        ];
+        let super_traits: Vec<Path> = vec![
+            parse_quote! { std::fmt::Display },
+            parse_quote! { core::fmt::Debug },
+        ];
+
+        // Generate the actual output using the core logic function
+        let output_tokens =
+            generate_trait_registration(&ty, &marker_traits, &super_traits, "this_crate");
+
+        let expected_output = quote! {
+            ocaml_rs_smartptr::registry::register_type::<dyn ::std::error::Error>();
+            ocaml_rs_smartptr::registry::register_type::<dyn ::std::error::Error>();
+            ocaml_rs_smartptr::registry::register_type_info::<
+                dyn ::std::error::Error,
+            >(
+                "std::error::Error",
+                vec!["std::error::Error", "std::fmt::Display", "core::fmt::Debug"],
+            );
+            ocaml_rs_smartptr::registry::register::<
+                Box<dyn ::std::error::Error>,
+                dyn ::std::error::Error,
+            >(
+                |x: &Box<dyn ::std::error::Error>| x.as_ref(),
+                |x: &mut Box<dyn ::std::error::Error>| x.as_mut(),
+            );
+            ocaml_rs_smartptr::registry::register::<
+                Box<dyn ::std::error::Error>,
+                dyn std::fmt::Display,
+            >(
+                |x: &Box<dyn ::std::error::Error>| x.as_ref(),
+                |x: &mut Box<dyn ::std::error::Error>| x.as_mut(),
+            );
+            ocaml_rs_smartptr::registry::register::<
+                Box<dyn ::std::error::Error>,
+                dyn core::fmt::Debug,
+            >(
+                |x: &Box<dyn ::std::error::Error>| x.as_ref(),
+                |x: &mut Box<dyn ::std::error::Error>| x.as_mut(),
+            );
+            ocaml_rs_smartptr::registry::register_type::<
+                dyn ::std::error::Error + ::core::marker::Send,
+            >();
+            ocaml_rs_smartptr::registry::register_type_info::<
+                dyn ::std::error::Error + ::core::marker::Send,
+            >(
+                "std::error::Error",
+                vec![
+                    "std::error::Error", "core::marker::Send", "std::fmt::Display",
+                    "core::fmt::Debug"
+                ],
+            );
+            ocaml_rs_smartptr::registry::register::<
+                Box<dyn ::std::error::Error + ::core::marker::Send>,
+                dyn ::std::error::Error + ::core::marker::Send,
+            >(
+                |x: &Box<dyn ::std::error::Error + ::core::marker::Send>| x.as_ref(),
+                |x: &mut Box<dyn ::std::error::Error + ::core::marker::Send>| x.as_mut(),
+            );
+            ocaml_rs_smartptr::registry::register::<
+                Box<dyn ::std::error::Error + ::core::marker::Send>,
+                dyn std::fmt::Display,
+            >(
+                |x: &Box<dyn ::std::error::Error + ::core::marker::Send>| x.as_ref(),
+                |x: &mut Box<dyn ::std::error::Error + ::core::marker::Send>| x.as_mut(),
+            );
+            ocaml_rs_smartptr::registry::register::<
+                Box<dyn ::std::error::Error + ::core::marker::Send>,
+                dyn core::fmt::Debug,
+            >(
+                |x: &Box<dyn ::std::error::Error + ::core::marker::Send>| x.as_ref(),
+                |x: &mut Box<dyn ::std::error::Error + ::core::marker::Send>| x.as_mut(),
+            );
+            ocaml_rs_smartptr::registry::register_type::<
+                dyn ::std::error::Error + ::core::marker::Sync,
+            >();
+            ocaml_rs_smartptr::registry::register_type_info::<
+                dyn ::std::error::Error + ::core::marker::Sync,
+            >(
+                "std::error::Error",
+                vec![
+                    "std::error::Error", "core::marker::Sync", "std::fmt::Display",
+                    "core::fmt::Debug"
+                ],
+            );
+            ocaml_rs_smartptr::registry::register::<
+                Box<dyn ::std::error::Error + ::core::marker::Sync>,
+                dyn ::std::error::Error + ::core::marker::Sync,
+            >(
+                |x: &Box<dyn ::std::error::Error + ::core::marker::Sync>| x.as_ref(),
+                |x: &mut Box<dyn ::std::error::Error + ::core::marker::Sync>| x.as_mut(),
+            );
+            ocaml_rs_smartptr::registry::register::<
+                Box<dyn ::std::error::Error + ::core::marker::Sync>,
+                dyn std::fmt::Display,
+            >(
+                |x: &Box<dyn ::std::error::Error + ::core::marker::Sync>| x.as_ref(),
+                |x: &mut Box<dyn ::std::error::Error + ::core::marker::Sync>| x.as_mut(),
+            );
+            ocaml_rs_smartptr::registry::register::<
+                Box<dyn ::std::error::Error + ::core::marker::Sync>,
+                dyn core::fmt::Debug,
+            >(
+                |x: &Box<dyn ::std::error::Error + ::core::marker::Sync>| x.as_ref(),
+                |x: &mut Box<dyn ::std::error::Error + ::core::marker::Sync>| x.as_mut(),
+            );
+            ocaml_rs_smartptr::registry::register_type::<
+                dyn ::std::error::Error + ::core::marker::Send + ::core::marker::Sync,
+            >();
+            ocaml_rs_smartptr::registry::register_type_info::<
+                dyn ::std::error::Error + ::core::marker::Send + ::core::marker::Sync,
+            >(
+                "std::error::Error",
+                vec![
+                    "std::error::Error", "core::marker::Send", "core::marker::Sync",
+                    "std::fmt::Display", "core::fmt::Debug"
+                ],
+            );
+            ocaml_rs_smartptr::registry::register::<
+                Box<dyn ::std::error::Error + ::core::marker::Send + ::core::marker::Sync>,
+                dyn ::std::error::Error + ::core::marker::Send + ::core::marker::Sync,
+            >(
+                |x: &Box<dyn ::std::error::Error + ::core::marker::Send + ::core::marker::Sync>| {
+                    x.as_ref()
+                },
+                |
+                    x: &mut Box<
+                        dyn ::std::error::Error + ::core::marker::Send + ::core::marker::Sync,
+                    >|
+                x.as_mut(),
+            );
+            ocaml_rs_smartptr::registry::register::<
+                Box<dyn ::std::error::Error + ::core::marker::Send + ::core::marker::Sync>,
+                dyn std::fmt::Display,
+            >(
+                |x: &Box<dyn ::std::error::Error + ::core::marker::Send + ::core::marker::Sync>| {
+                    x.as_ref()
+                },
+                |
+                    x: &mut Box<
+                        dyn ::std::error::Error + ::core::marker::Send + ::core::marker::Sync,
+                    >|
+                x.as_mut(),
+            );
+            ocaml_rs_smartptr::registry::register::<
+                Box<dyn ::std::error::Error + ::core::marker::Send + ::core::marker::Sync>,
+                dyn core::fmt::Debug,
+            >(
+                |x: &Box<dyn ::std::error::Error + ::core::marker::Send + ::core::marker::Sync>| {
+                    x.as_ref()
+                },
+                |
+                    x: &mut Box<
+                        dyn ::std::error::Error + ::core::marker::Send + ::core::marker::Sync,
+                    >|
+                x.as_mut(),
             );
         };
 
