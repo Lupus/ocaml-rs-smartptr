@@ -43,3 +43,13 @@ jobs:
       - run: opam install . --deps-only --with-test
       - run: opam exec -- dune build
       - run: opam exec -- dune runtest
+      - name: Build docs
+        run: cargo doc --no-deps --release
+      - name: Create index.html redirect
+        run: |
+          echo '<meta http-equiv="refresh" content="0; url=ocaml-rs-smartptr/">' > target/doc/index.html
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./target/doc
