@@ -36,6 +36,11 @@ jobs:
         uses: ocaml/setup-ocaml@v2
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
+          # Explicitly specify required system dependencies
+          system-dependencies: |
+            pkg-config
+            libgmp-dev
+            m4
 
       - run: cargo fmt --all -- --check
       - run: opam exec -- cargo clippy --all -- -D warnings
