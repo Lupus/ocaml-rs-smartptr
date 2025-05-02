@@ -16,10 +16,7 @@ jobs:
       fail-fast: true
       matrix:
         os: [macos-latest, ubuntu-latest]
-        ocaml-compiler:
-          [
-            "4.14.1", "5.2.1"
-          ]
+        ocaml-compiler: ["4.14.1", "5.2.1"]
 
     steps:
       - name: Checkout code
@@ -32,15 +29,10 @@ jobs:
           path: "~/.opam"
           key: ocaml-rs-opam-${{ matrix.ocaml-compiler }}-${{ matrix.os }}
 
-      - name: Use OCaml ${{ matrix.ocaml-compiler }}
-        uses: ocaml/setup-ocaml@v2
+      - name: Set-up OCaml ${{ matrix.ocaml-compiler }}
+        uses: ocaml/setup-ocaml@v3
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
-          # Explicitly specify required system dependencies
-          system-dependencies: |
-            pkg-config
-            libgmp-dev
-            m4
 
       - run: cargo fmt --all -- --check
       - run: opam exec -- cargo clippy --all -- -D warnings
@@ -48,6 +40,7 @@ jobs:
       - run: opam install . --deps-only --with-test
       - run: opam exec -- dune build
       - run: opam exec -- dune runtest
+
       - name: Build docs
         run: cargo doc --no-deps --release
       - name: Create index.html redirect
