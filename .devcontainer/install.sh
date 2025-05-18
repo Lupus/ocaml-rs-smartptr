@@ -7,6 +7,20 @@ sudo apt-get update
 echo "(*) Installing fzf..."
 sudo apt-get install fzf
 
+# Initialize Opam (with --disable-sandboxing for Docker environments)
+echo "(*) Initializing Opam..."
+opam init --disable-sandboxing --auto-setup --yes
+
+# Set up Opam environment
+eval $(opam env)
+
+# Create Opam switch with OCaml 5.2.1 (latest in the matrix)
+echo "(*) Creating Opam switch with OCaml 5.2.1..."
+opam switch create 5.2.1
+
+# Set up environment variables again after switch creation
+eval $(opam env)
+
 echo "(*) Installing patdiff..."
 opam install patdiff
 eval $(opam env)
