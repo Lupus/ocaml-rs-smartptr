@@ -7,6 +7,25 @@ sudo apt-get update
 echo "(*) Installing fzf..."
 sudo apt-get install fzf
 
+# Check if Rust is installed, if not install it
+if ! command -v rustc &> /dev/null; then
+    echo "(*) Installing Rust..."
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+    # Source environment or use full path to binaries
+    if [ -f "$HOME/.cargo/env" ]; then
+        source $HOME/.cargo/env
+    else
+        export PATH="$HOME/.cargo/bin:$PATH"
+    fi
+fi
+
+# Make sure rustup/cargo are in PATH
+export PATH="$HOME/.cargo/bin:$PATH"
+
+# Install Rust components (cargo fmt and cargo clippy)
+echo "(*) Installing Rust components (cargo fmt and cargo clippy)..."
+rustup component add rustfmt clippy
+
 # Initialize Opam (with --disable-sandboxing for Docker environments)
 echo "(*) Initializing Opam..."
 opam init --disable-sandboxing --auto-setup --yes
