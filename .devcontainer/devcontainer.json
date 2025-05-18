@@ -1,0 +1,20 @@
+{
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "features": {
+    "ghcr.io/devcontainers/features/rust:1": {},
+    "ghcr.io/devcontainers-extra/features/ocaml-opam:1": {},
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "installOhMyZsh": true,
+      "installOhMyZshConfig": true,
+      "upgradePackages": true,
+      "configureZshAsDefaultShell": true
+   },
+   "ghcr.io/devcontainers-extra/features/zsh-plugins:0": {
+       "plugins": "fzf fzf-tab",
+       "omzPlugins": "https://github.com/Aloxaf/fzf-tab"
+   },
+   "ghcr.io/devcontainers/features/python:1": {}
+  },
+  "postCreateCommand": "./install.sh"
+}
