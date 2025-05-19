@@ -11,7 +11,7 @@ depends: [
   "rust-staticlib-gen" {>= "0.2.2" & with-test}
   "rust-staticlib-virtual" {>= "0.2.2"}
   "dune-cargo-build" {>= "0.2.2" & build}
-  "ocamlformat" {with-test & >= "0.26.2" & < "0.27.0"}
+  "ocamlformat" {with-test & >= "0.26.2" & < "0.28.0"}
   "odoc" {with-doc}
 ]
 build: [
