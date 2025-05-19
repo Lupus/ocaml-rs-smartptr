@@ -9,6 +9,8 @@ for safe interaction between Rust and OCaml. The library includes various
 utilities and extensions for generating OCaml bindings, handling OCaml
 functions, and managing OCaml values in Rust.
 
+Documentation can be browsed [online](http://olkhovskiy.me/ocaml-rs-smartptr).
+
 ## Modules
 
 ### `src/ptr.rs`
