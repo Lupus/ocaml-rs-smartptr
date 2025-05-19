@@ -349,10 +349,10 @@ pub fn stubs_gen_main() -> std::io::Result<()> {
                 plugin.generate(env)
             })
             .map_err(|err| {
-                std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    format!("plugin from crate `{}' failed: {:?}", crate_name, err),
-                )
+                std::io::Error::other(format!(
+                    "plugin from crate `{}' failed: {:?}",
+                    crate_name, err
+                ))
             })?;
 
             let file_name = format!(
