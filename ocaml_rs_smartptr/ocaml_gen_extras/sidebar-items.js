@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["stubs_gen_main"],"struct":["OcamlGenPlugin","P1","P2","P3","PolymorphicValue","WithTypeParams"],"trait":["TypeParams"]};

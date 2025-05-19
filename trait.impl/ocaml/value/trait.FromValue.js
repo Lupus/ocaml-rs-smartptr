@@ -1,0 +1,9 @@
+(function() {
+    var implementors = Object.fromEntries([["ocaml_rs_smartptr",[["impl&lt;Args, Ret&gt; FromValue for <a class=\"struct\" href=\"ocaml_rs_smartptr/func/struct.OCamlFunc.html\" title=\"struct ocaml_rs_smartptr::func::OCamlFunc\">OCamlFunc</a>&lt;Args, Ret&gt;"],["impl&lt;P: <a class=\"trait\" href=\"ocaml_rs_smartptr/ocaml_gen_extras/trait.TypeParams.html\" title=\"trait ocaml_rs_smartptr::ocaml_gen_extras::TypeParams\">TypeParams</a>, T: FromValue + ToValue&gt; FromValue for <a class=\"struct\" href=\"ocaml_rs_smartptr/ocaml_gen_extras/struct.WithTypeParams.html\" title=\"struct ocaml_rs_smartptr::ocaml_gen_extras::WithTypeParams\">WithTypeParams</a>&lt;P, T&gt;"],["impl&lt;T&gt; FromValue for <a class=\"struct\" href=\"ocaml_rs_smartptr/ptr/struct.DynBox.html\" title=\"struct ocaml_rs_smartptr::ptr::DynBox\">DynBox</a>&lt;T&gt;<div class=\"where\">where\n    T: <a class=\"trait\" href=\"https://doc.rust-lang.org/1.86.0/core/marker/trait.Send.html\" title=\"trait core::marker::Send\">Send</a> + ?<a class=\"trait\" href=\"https://doc.rust-lang.org/1.86.0/core/marker/trait.Sized.html\" title=\"trait core::marker::Sized\">Sized</a> + 'static,</div>"],["impl&lt;const C: <a class=\"primitive\" href=\"https://doc.rust-lang.org/1.86.0/std/primitive.char.html\">char</a>&gt; FromValue for <a class=\"struct\" href=\"ocaml_rs_smartptr/ocaml_gen_extras/struct.PolymorphicValue.html\" title=\"struct ocaml_rs_smartptr::ocaml_gen_extras::PolymorphicValue\">PolymorphicValue</a>&lt;C&gt;"]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":57,"fragment_lengths":[1456]}

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["ocaml_rs_smartptr_init_registry"]};

@@ -1,0 +1,9 @@
+(function() {
+    var implementors = Object.fromEntries([["ocaml_rs_smartptr",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.86.0/core/clone/trait.Clone.html\" title=\"trait core::clone::Clone\">Clone</a> for <a class=\"struct\" href=\"ocaml_rs_smartptr/ml_box/struct.MlBox.html\" title=\"struct ocaml_rs_smartptr::ml_box::MlBox\">MlBox</a>"],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.86.0/core/clone/trait.Clone.html\" title=\"trait core::clone::Clone\">Clone</a> for <a class=\"struct\" href=\"ocaml_rs_smartptr/registry/struct.TypeInfo.html\" title=\"struct ocaml_rs_smartptr::registry::TypeInfo\">TypeInfo</a>"],["impl&lt;Args, Ret&gt; <a class=\"trait\" href=\"https://doc.rust-lang.org/1.86.0/core/clone/trait.Clone.html\" title=\"trait core::clone::Clone\">Clone</a> for <a class=\"struct\" href=\"ocaml_rs_smartptr/func/struct.OCamlFunc.html\" title=\"struct ocaml_rs_smartptr::func::OCamlFunc\">OCamlFunc</a>&lt;Args, Ret&gt;"],["impl&lt;T: 'static + <a class=\"trait\" href=\"https://doc.rust-lang.org/1.86.0/core/marker/trait.Send.html\" title=\"trait core::marker::Send\">Send</a> + ?<a class=\"trait\" href=\"https://doc.rust-lang.org/1.86.0/core/marker/trait.Sized.html\" title=\"trait core::marker::Sized\">Sized</a>&gt; <a class=\"trait\" href=\"https://doc.rust-lang.org/1.86.0/core/clone/trait.Clone.html\" title=\"trait core::clone::Clone\">Clone</a> for <a class=\"struct\" href=\"ocaml_rs_smartptr/ptr/struct.DynBox.html\" title=\"struct ocaml_rs_smartptr::ptr::DynBox\">DynBox</a>&lt;T&gt;"]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":57,"fragment_lengths":[1492]}

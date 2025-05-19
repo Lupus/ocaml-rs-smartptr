@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"macro":["ocaml_export","ocaml_gen_bindings","register_rtti","register_trait","register_type"],"mod":["callable","func","ml_box","ocaml_gen_extras","ptr","registry","stubs"]};

@@ -1,0 +1,56 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="This module provides the `DynBox` smart pointer, which is a wrapper around the registry’s `DynArc` with `PhantomData` for type safety. `DynBox` allows the user to wrap the object in a `Mutex` or shared `RwLock`. By default, using `.into()` will create a `Mutex`-protected version (exclusive)."><title>ocaml_rs_smartptr::ptr - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-6c3ea77c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="ocaml_rs_smartptr" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0 (05f9846f8 2025-03-31)" data-channel="1.86.0" data-search-js="search-581efc7a.js" data-settings-js="settings-6dad6058.js" ><script src="../../static.files/storage-3a5871a4.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-4d63596a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../ocaml_rs_smartptr/index.html">ocaml_<wbr>rs_<wbr>smartptr</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module ptr</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#key-components" title="Key Components">Key Components</a></li><li><a href="#usage" title="Usage">Usage</a><ul><li><a href="#creating-a-dynbox" title="Creating a `DynBox`">Creating a <code>DynBox</code></a></li><li><a href="#coercion" title="Coercion">Coercion</a></li><li><a href="#ocaml-integration" title="OCaml Integration">OCaml Integration</a></li><li><a href="#rustyobj" title="RustyObj">RustyObj</a></li></ul></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="../index.html">In crate ocaml_<wbr>rs_<wbr>smartptr</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">ocaml_rs_smartptr</a></div><h1>Module <span>ptr</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/ocaml_rs_smartptr/ptr.rs.html#1-465">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>This module provides the <code>DynBox</code> smart pointer, which is a wrapper around the
+registry’s <code>DynArc</code> with <code>PhantomData</code> for type safety. <code>DynBox</code> allows the user
+to wrap the object in a <code>Mutex</code> or shared <code>RwLock</code>. By default, using <code>.into()</code>
+will create a <code>Mutex</code>-protected version (exclusive).</p>
+<h3 id="key-components"><a class="doc-anchor" href="#key-components">§</a>Key Components</h3>
+<ul>
+<li><code>DynBox&lt;T&gt;</code>: A smart pointer for dynamically typed Rust objects referenced
+from the OCaml side.</li>
+<li><code>RustyObj</code>: A thin wrapper around a pointer to <code>DynArc</code>.</li>
+</ul>
+<h3 id="usage"><a class="doc-anchor" href="#usage">§</a>Usage</h3><h4 id="creating-a-dynbox"><a class="doc-anchor" href="#creating-a-dynbox">§</a>Creating a <code>DynBox</code></h4>
+<p>You can create a <code>DynBox</code> with either a <code>Mutex</code> or <code>RwLock</code>:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>ocaml_rs_smartptr::ptr::DynBox;
+<span class="kw">let </span>exclusive_box = DynBox::new_exclusive(<span class="number">42</span>); <span class="comment">// Mutex-protected
+</span><span class="kw">let </span>shared_box = DynBox::new_shared(<span class="string">"foo"</span>); <span class="comment">// RwLock-protected</span></code></pre></div>
+<h4 id="coercion"><a class="doc-anchor" href="#coercion">§</a>Coercion</h4>
+<p>The <code>coerce</code> and <code>coerce_mut</code> methods return a handle that holds a lock. Be
+cautious to avoid deadlocks when using these methods.</p>
+<h4 id="ocaml-integration"><a class="doc-anchor" href="#ocaml-integration">§</a>OCaml Integration</h4>
+<p><code>DynBox</code> integrates with the <code>ocaml_gen</code> package by providing <code>OCamlDesc</code> and
+<code>OCamlBinding</code> traits. Polymorphic variants are used to encode supported traits
+of the Rust type that we wrap/bind.</p>
+<p>Example:</p>
+<div class="example-wrap"><pre class="language-ocaml"><code>module Animal = struct 
+  type nonrec t = [ `Ocaml_rs_smartptr_test_stubs_animal_proxy|`Core_marker_send ] Ocaml_rs_smartptr.Rusty_obj.t
+  external name : t -&gt; string = &quot;animal_name&quot;
+  external noise : t -&gt; string = &quot;animal_noise&quot;
+  external talk : t -&gt; unit = &quot;animal_talk&quot;
+end
+
+
+module Sheep = struct 
+  type nonrec t = [ `Ocaml_rs_smartptr_test_stubs_sheep|`Core_marker_sync|`Core_marker_send|`Ocaml_rs_smartptr_test_stubs_animal_proxy ] Ocaml_rs_smartptr.Rusty_obj.t
+  external create : string -&gt; t = &quot;sheep_create&quot;
+  external is_naked : t -&gt; bool = &quot;sheep_is_naked&quot;
+  external sheer : t -&gt; unit = &quot;sheep_sheer&quot;
+end
+
+
+module Wolf = struct 
+  type nonrec t = [ `Ocaml_rs_smartptr_test_stubs_wolf|`Core_marker_sync|`Core_marker_send|`Ocaml_rs_smartptr_test_stubs_animal_proxy ] Ocaml_rs_smartptr.Rusty_obj.t
+  external create : string -&gt; t = &quot;wolf_create&quot;
+  external set_hungry : t -&gt; bool -&gt; unit = &quot;wolf_set_hungry&quot;
+end</code></pre></div>
+<p>This allows passing <code>Wolf</code> or <code>Sheep</code> whenever <code>Animal</code> is required by using
+coercion operator in OCaml (<code>:&gt;</code>).</p>
+<h4 id="rustyobj"><a class="doc-anchor" href="#rustyobj">§</a>RustyObj</h4>
+<p><code>RustyObj</code> is a thin wrapper around a pointer to <code>DynArc</code>. We convert <code>Arc</code> into
+a raw pointer to hold that raw pointer in the OCaml heap, ensuring that moving
+of that value by the OCaml GC does not affect any Rust invariants. Reverse
+operation reconstructs the <code>Arc</code> from the raw pointer. This ensures that both
+OCaml and Rust always hold valid Arc-baked references to objects they need.</p>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.DynBox.html" title="struct ocaml_rs_smartptr::ptr::DynBox">DynBox</a></dt><dd>A smart pointer around the registry’s <code>DynArc</code> with <code>PhantomData</code> for type safety.
+Allows the user to wrap the object in a <code>Mutex</code> or shared <code>RwLock</code>.
+By default, using <code>.into()</code> will create a <code>Mutex</code>-protected version (exclusive).</dd></dl></section></div></main></body></html>

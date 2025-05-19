@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["coerce","coerce_mut","get_type_info","initialize_plugins","register","register_type","register_type_info"],"struct":["Plugin","TypeInfo"],"type":["Handle","HandleMut"]};
