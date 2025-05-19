@@ -19,7 +19,6 @@
         "ghcr.io/devcontainers/features/python:1": {},
         "./features/opam-switch": {},
         "./features/rust": {},
-        "./features/project-deps": {},
         "./features/git-tools": {}
     },
     "customizations": {
