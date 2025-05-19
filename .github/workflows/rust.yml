@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  run:
+  test:
     name: Build
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
@@ -17,7 +17,6 @@ jobs:
       matrix:
         os: [macos-latest, ubuntu-latest]
         ocaml-compiler: ["4.14.1", "5.2.1"]
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -40,6 +39,32 @@ jobs:
       - run: opam install . --deps-only --with-test
       - run: opam exec -- dune build
       - run: opam exec -- dune runtest
+
+  build-docs:
+    needs: test
+    name: Documentation
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    timeout-minutes: 30
+    
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: OCaml/Opam cache
+        id: ocaml-rs-opam-cache
+        uses: actions/cache@v4
+        with:
+          path: "~/.opam"
+          key: ocaml-rs-opam-docs
+
+      - name: Set-up OCaml
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: 5.2.1
 
       - name: Build docs
         run: opam exec -- cargo doc --no-deps --release
