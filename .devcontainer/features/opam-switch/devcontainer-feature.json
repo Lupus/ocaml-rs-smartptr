@@ -30,7 +30,7 @@
                     "editor.formatOnSave": false
                 },
                 "rust-analyzer.cargo.extraEnv": {
-                    "OCAMLOPT": "/home/codespace/.opam/5.3.0/bin/ocamlopt"
+                    "OCAMLOPT": "/home/vscode/.opam/5.3.0/bin/ocamlopt"
                 }
             }
         }
